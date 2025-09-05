@@ -4,9 +4,9 @@ import Link from "next/link";
 import { Database } from "@/lib/database";
 
 interface TagPageProps {
-  params: {
+  params: Promise<{
     name: string;
-  };
+  }>;
 }
 
 async function getTagArticles(tagName: string) {

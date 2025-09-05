@@ -4,9 +4,9 @@ import Link from "next/link";
 import { Database } from "@/lib/database";
 
 interface ArticlePageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 async function getArticle(slug: string) {
@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
       url: `${process.env.SITE_URL}/articles/${article.slug}`,
       type: 'article',
       publishedTime: article.published_at.toISOString(),
-      authors: ['AI Editor'],
+      authors: ['Aiden V. Pulse'],
       images: article.hero_url ? [article.hero_url] : undefined,
     },
     twitter: {
@@ -202,7 +202,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Author:</span>
-                      <span className="font-medium">AI Editor</span>
+                      <span className="font-medium">Aiden V. Pulse</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Published:</span>
