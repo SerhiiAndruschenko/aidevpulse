@@ -1,0 +1,338 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.glow {
+  box-shadow: 0 0 30px rgba(234, 128, 252, 0.2);
+}
+
+/* Loading animation styles */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -8px, 0);
+  }
+  70% {
+    transform: translate3d(0, -4px, 0);
+  }
+  90% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Footer hover effects */
+footer a:hover {
+  transform: translateY(-1px);
+  transition: all 0.2s ease-in-out;
+}
+
+/* Smooth page transitions */
+
+
+/* Custom scrollbar for footer links */
+footer .space-y-2 a {
+  position: relative;
+  overflow: hidden;
+}
+
+footer .space-y-2 a::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  transition: width 0.3s ease-in-out;
+}
+
+footer .space-y-2 a:hover::before {
+  width: 100%;
+}
+
+/* Loading spinner enhancements */
+.loading-spinner {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.loading-spinner .animate-spin {
+  animation: spin 1.2s linear infinite;
+}
+
+.loading-spinner .animate-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.loading-spinner .animate-bounce {
+  animation: bounce 1.2s ease-in-out infinite;
+}
+
+/* TipTap Editor Styles */
+.ProseMirror {
+  outline: none;
+  min-height: 150px;
+  color: white;
+  line-height: 1.6;
+  background-color: transparent;
+}
+
+.ProseMirror:focus {
+  outline: none;
+}
+
+.ProseMirror p {
+  margin-bottom: 1rem;
+  color: white;
+}
+
+.ProseMirror h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 1.5rem 0 1rem 0;
+  color: #e5e7eb;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 1.25rem 0 0.75rem 0;
+  color: #d1d5db;
+}
+
+.ProseMirror h3 {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 1rem 0 0.5rem 0;
+  color: #9ca3af;
+}
+
+.ProseMirror strong {
+  font-weight: bold;
+  color: #fbbf24;
+}
+
+.ProseMirror em {
+  font-style: italic;
+  color: #a78bfa;
+}
+
+.ProseMirror u {
+  text-decoration: underline;
+  color: #a78bfa;
+}
+
+.ProseMirror del {
+  text-decoration: line-through;
+  color: #f87171;
+}
+
+.ProseMirror blockquote {
+  border-left: 4px solid #3b82f6;
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  background-color: rgba(59, 130, 246, 0.1);
+  font-style: italic;
+  color: #d1d5db;
+}
+
+
+.ProseMirror ul{
+  list-style-type: disc;
+}
+
+.ProseMirror ol{
+  list-style-type: decimal;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  margin: 1rem 0;
+  padding-left: 2rem;
+  color: white;
+}
+
+.ProseMirror li {
+  margin-bottom: 0.5rem;
+  color: white;
+}
+
+.ProseMirror code {
+  background-color: rgba(107, 114, 128, 0.3);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  color: #fbbf24;
+  font-family: 'Courier New', monospace;
+}
+
+.ProseMirror pre {
+  background-color: rgba(107, 114, 128, 0.3);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.ProseMirror pre code {
+  background-color: transparent;
+  padding: 0;
+  color: #fbbf24;
+}
+
+.ProseMirror hr {
+  border: none;
+  border-top: 2px solid #4b5563;
+  margin: 2rem 0;
+}
+
+/* Placeholder styles */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #6b7280;
+  pointer-events: none;
+  height: 0;
+}
+
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  color-scheme: dark;
+  opacity: 0;
+}
+input[type="date"]+.absolute{
+  pointer-events: none;
+  right: 24px;
+}
+
+/* Article content styles */
+.article-content {
+  @apply prose prose-lg max-w-none;
+}
+
+.article-content h2 {
+  @apply text-2xl font-bold text-gray-900 mt-8 mb-4;
+}
+
+.article-content h3 {
+  @apply text-xl font-semibold text-gray-800 mt-6 mb-3;
+}
+
+.article-content ul {
+  @apply list-disc list-inside space-y-2 mb-4;
+}
+
+.article-content li {
+  @apply text-gray-700;
+}
+
+.article-content pre {
+  @apply bg-gray-100 rounded-lg p-4 overflow-x-auto;
+}
+
+.article-content code {
+  @apply  px-2 py-1 rounded text-sm;
+}
+
+.article-content .warning {
+  @apply bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded;
+}
+
+.article-content .warning ul {
+  @apply mb-0;
+}
+
+.article-content .warning li {
+  @apply text-yellow-800;
+}
+
+/* Summary section */
+.article-content .summary {
+  @apply bg-blue-50 border-l-4 border-blue-400 p-4 rounded mb-6;
+}
+
+.article-content .summary p {
+  @apply text-blue-800 font-medium;
+}
+
+/* Code snippet section */
+.article-content .code-snippet {
+  @apply bg-gray-50 border border-gray-200 rounded-lg p-4;
+}
+
+.article-content .code-snippet h2 {
+  @apply text-lg font-semibold text-gray-800 mb-3 mt-0;
+}
+
+.article-content .code-snippet pre {
+  @apply bg-gray-900 text-gray-100 p-4 rounded;
+}
+
+/* Disclaimer */
+.article-content .disclaimer {
+  @apply bg-gray-50 border border-gray-200 rounded-lg p-4 mt-8;
+}
+
+.article-content .disclaimer p {
+  @apply text-gray-600 text-sm;
+}
