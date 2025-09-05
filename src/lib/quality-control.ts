@@ -20,11 +20,16 @@ export class QualityControlService {
     const checks: QualityCheck[] = [];
     
     for (const url of urls) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
       try {
         const response = await fetch(url, { 
           method: 'HEAD',
-          timeout: 10000 
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
         
         if (response.ok) {
           checks.push({
@@ -44,6 +49,7 @@ export class QualityControlService {
           });
         }
       } catch (error) {
+        clearTimeout(timeoutId);
         checks.push({
           id: `link_${url}`,
           type: 'link_validation',
