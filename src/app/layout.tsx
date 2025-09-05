@@ -7,6 +7,8 @@ import { getThemeFromCookies } from "@/lib/theme-detector";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
+import { GoogleAnalytics } from "@next/third-parties/google";
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -96,6 +98,7 @@ export default async function RootLayout({
             __html: JSON.stringify(structuredData),
           }}
         />
+        <GoogleAnalytics gaId="G-126FME87T3" />
       </head>
       <body
         className={`${inter.variable} font-sans antialiased min-h-screen flex flex-col`}
