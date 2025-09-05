@@ -1,4 +1,4 @@
-import { Database } from './database';
+import { Database, Article } from './database';
 import IngestService from './ingest';
 import RankingService from './ranking';
 import AIService from './ai';
@@ -95,7 +95,7 @@ export class ArticleGenerator {
     return text.split(/\s+/).filter(word => word.length > 0).length;
   }
 
-  static async generateDailyArticle(): Promise<GeneratedArticle | null> {
+  static async generateDailyArticle(): Promise<Article | null> {
     try {
       console.log('Starting daily article generation...');
 
