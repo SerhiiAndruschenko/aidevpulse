@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Database } from "@/lib/database";
+import ArticlesList from "@/components/ArticlesList";
 
 export const metadata: Metadata = {
   title: "AIDevPulse - AI-Powered Tech Analysis",
@@ -25,11 +26,12 @@ export const metadata: Metadata = {
 
 async function getRecentArticles() {
   try {
-    const articles = await Database.getPublishedArticles(6, 0);
-    return articles;
+    const articles = await Database.getArticles(10, 0);
+    const totalCount = await Database.getArticlesCount();
+    return { articles, totalCount };
   } catch (error) {
     console.error('Failed to fetch articles:', error);
-    return [];
+    return { articles: [], totalCount: 0 };
   }
 }
 
@@ -44,32 +46,42 @@ async function getPopularTags() {
 }
 
 export default async function Home() {
-  const [articles, tags] = await Promise.all([
+  const [articlesData, tags] = await Promise.all([
     getRecentArticles(),
     getPopularTags()
   ]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <div className="container mx-auto px-4 py-16">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+      <div className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80 dark:from-primary dark:via-primary/95 dark:to-primary/85">
+        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px] dark:bg-grid-white/[0.05]" />
+        <div className="container mx-auto px-4 py-20 relative">
+          <div className="max-w-6xl mx-auto text-center">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-white">
               AIDevPulse
             </h1>
-            <p className="text-xl md:text-2xl mb-8 opacity-90">
+            <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-3xl mx-auto">
               AI-powered analysis of the latest tech releases, updates, and breaking changes
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <span className="bg-white/20 px-4 py-2 rounded-full text-sm">
-                🤖 AI-Generated Content
+            <div className="flex flex-wrap justify-center gap-3">
+              <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-white/20 text-white border border-white/30 backdrop-blur-sm hover:bg-white/30 transition-all duration-200">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                AI-Generated Content
               </span>
-              <span className="bg-white/20 px-4 py-2 rounded-full text-sm">
-                📅 Daily Updates
+              <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-white/20 text-white border border-white/30 backdrop-blur-sm hover:bg-white/30 transition-all duration-200">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Daily Updates
               </span>
-              <span className="bg-white/20 px-4 py-2 rounded-full text-sm">
-                🔍 Expert Analysis
+              <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-white/20 text-white border border-white/30 backdrop-blur-sm hover:bg-white/30 transition-all duration-200">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Expert Analysis
               </span>
             </div>
           </div>
@@ -81,101 +93,48 @@ export default async function Home() {
           {/* Main Content */}
           <div className="lg:col-span-2">
             <div className="mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">Latest Articles</h2>
-              
-              {articles.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4">📝</div>
-                  <h3 className="text-xl font-semibold text-gray-600 mb-2">No articles yet</h3>
-                  <p className="text-gray-500">Check back soon for AI-generated tech analysis!</p>
-                </div>
-              ) : (
-                <div className="space-y-8">
-                  {articles.map((article) => (
-                    <article key={article.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                      {article.hero_url && (
-                        <div className="aspect-video bg-gray-200">
-                          <img 
-                            src={article.hero_url} 
-                            alt={article.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <div className="p-6">
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                            {article.author_type === 'ai' ? 'AI Analysis' : 'Human'}
-                          </span>
-                          <span className="text-gray-500 text-sm">
-                            {new Date(article.published_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                        
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">
-                          <Link href={`/articles/${article.slug}`} className="hover:text-blue-600 transition-colors">
-                            {article.title}
-                          </Link>
-                        </h3>
-                        
-                        {article.dek && (
-                          <p className="text-gray-600 mb-4">{article.dek}</p>
-                        )}
-                        
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <span>{article.word_count} words</span>
-                            <span>{article.lang.toUpperCase()}</span>
-                          </div>
-                          <Link 
-                            href={`/articles/${article.slug}`}
-                            className="text-blue-600 hover:text-blue-800 font-medium"
-                          >
-                            Read More →
-                          </Link>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
+              <h2 className="text-3xl font-bold text-foreground mb-6">Latest Articles</h2>
+              <ArticlesList 
+                initialArticles={articlesData.articles}
+                totalCount={articlesData.totalCount}
+              />
             </div>
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* About */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">About This Blog</h3>
-              <p className="text-gray-600 mb-4">
+            <div className="bg-card border border-border rounded-xl p-6">
+              <h3 className="text-xl font-semibold text-card-foreground mb-4">About This Blog</h3>
+              <p className="text-muted-foreground mb-6">
                 This blog is powered by AI to analyze the latest tech releases, updates, and breaking changes. 
                 Our AI editor processes official release notes and creates insightful analysis for developers.
               </p>
-              <div className="space-y-2 text-sm text-gray-500">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  <span>AI-generated content</span>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <span className="text-muted-foreground">AI-generated content</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                  <span>Daily updates</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <span className="text-muted-foreground">Daily updates</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-                  <span>Expert analysis</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <span className="text-muted-foreground">Expert analysis</span>
                 </div>
               </div>
             </div>
 
             {/* Popular Tags */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Popular Tags</h3>
+            <div className="bg-card border border-border rounded-xl p-6">
+              <h3 className="text-xl font-semibold text-card-foreground mb-4">Popular Tags</h3>
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag) => (
                   <Link
                     key={tag.id}
                     href={`/tags/${tag.name}`}
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm transition-colors"
+                    className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
                   >
                     {tag.name}
                   </Link>

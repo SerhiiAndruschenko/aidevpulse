@@ -207,6 +207,32 @@ export class Database {
     const result = await pool.query('SELECT * FROM tags ORDER BY name');
     return result.rows;
   }
+
+  // Pagination methods
+  static async getArticles(limit: number = 10, offset: number = 0): Promise<Article[]> {
+    const result = await pool.query(
+      'SELECT * FROM articles ORDER BY published_at DESC LIMIT $1 OFFSET $2',
+      [limit, offset]
+    );
+    return result.rows;
+  }
+
+  static async getArticlesCount(): Promise<number> {
+    const result = await pool.query('SELECT COUNT(*) as count FROM articles');
+    return parseInt(result.rows[0].count);
+  }
+
+  static async getArticlesCountByTag(tagName: string): Promise<number> {
+    const result = await pool.query(
+      `SELECT COUNT(DISTINCT a.id) as count 
+       FROM articles a
+       JOIN article_tags at ON a.id = at.article_id
+       JOIN tags t ON at.tag_id = t.id
+       WHERE t.name = $1`,
+      [tagName]
+    );
+    return parseInt(result.rows[0].count);
+  }
 }
 
 export default Database;

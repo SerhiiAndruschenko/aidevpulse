@@ -27,7 +27,7 @@ AI-powered blog that automatically generates analytical articles about the lates
 ### Data Flow
 1. **Ingest**: Daily collection of data from RSS feeds, GitHub releases, npm packages
 2. **Rank**: AI-powered ranking and selection of the best content
-3. **Generate**: AI analysis and article generation using Gemini
+3. **Generate**: Aiden Pulse and article generation using Gemini
 4. **Quality Control**: Automated validation and quality checks
 5. **Publish**: Automatic publishing with SEO optimization
 
@@ -127,7 +127,7 @@ The blog automatically ingests content from:
 Articles are generated using a structured approach:
 
 1. **Facts Pack**: Key information extracted from sources
-2. **AI Analysis**: Gemini AI creates analytical content
+2. **Aiden Pulse**: Gemini AI creates analytical content
 3. **Quality Validation**: Automated checks for accuracy and quality
 4. **SEO Optimization**: Meta tags, structured data, and sitemaps
 

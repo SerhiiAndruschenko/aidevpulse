@@ -2,22 +2,120 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@layer base {
+  /* Prevent flash of unstyled content */
+  html {
+    color-scheme: light;
+  }
+  
+  html.dark,
+  html[data-theme="dark"] {
+    color-scheme: dark;
+  }
+  
+  /* Immediate dark mode application */
+  html[data-theme="dark"] {
+    background-color: hsl(222.2 84% 4.9%);
+    color: hsl(210 40% 98%);
+  }
+  
+  html[data-theme="light"] {
+    background-color: hsl(0 0% 100%);
+    color: hsl(222.2 84% 4.9%);
+  }
+  
+  /* Body immediate styling */
+  body {
+    background-color: inherit;
+    color: inherit;
+  }
 
-@media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Light theme colors */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.75rem;
+  }
+
+  .dark,
+  [data-theme="dark"] {
+    /* Dark theme colors */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl lg:text-5xl;
+  }
+
+  h2 {
+    @apply text-3xl lg:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl lg:text-3xl;
+  }
+
+  h4 {
+    @apply text-xl lg:text-2xl;
+  }
+
+  h5 {
+    @apply text-lg lg:text-xl;
+  }
+
+  h6 {
+    @apply text-base lg:text-lg;
+  }
 }
 
 .glow {
@@ -267,35 +365,64 @@ input[type="date"]+.absolute{
 
 /* Article content styles */
 .article-content {
-  @apply prose prose-lg max-w-none;
+  @apply prose prose-lg max-w-none text-foreground;
+}
+
+.article-content h1,
+.article-content h2,
+.article-content h3,
+.article-content h4,
+.article-content h5,
+.article-content h6 {
+  @apply text-foreground font-bold;
 }
 
 .article-content h2 {
-  @apply text-2xl font-bold text-gray-900 mt-8 mb-4;
+  @apply text-2xl font-bold text-foreground mt-8 mb-4;
 }
 
 .article-content h3 {
-  @apply text-xl font-semibold text-gray-800 mt-6 mb-3;
+  @apply text-xl font-semibold text-foreground mt-6 mb-3;
+}
+
+.article-content p {
+  @apply text-foreground mb-4;
+}
+
+.article-content a {
+  @apply text-primary hover:text-primary/80 underline;
 }
 
 .article-content ul {
-  @apply list-disc list-inside space-y-2 mb-4;
+  @apply list-disc list-inside space-y-2 mb-4 text-foreground;
+}
+
+.article-content ol {
+  @apply list-decimal list-inside space-y-2 mb-4 text-foreground;
 }
 
 .article-content li {
-  @apply text-gray-700;
+  @apply text-foreground;
+}
+
+.article-content blockquote {
+  @apply border-l-4 border-primary pl-4 italic text-muted-foreground;
 }
 
 .article-content pre {
-  @apply bg-gray-100 rounded-lg p-4 overflow-x-auto;
+  @apply bg-muted text-foreground rounded-lg p-4 overflow-x-auto;
 }
 
 .article-content code {
-  @apply  px-2 py-1 rounded text-sm;
+  @apply bg-muted text-foreground px-2 py-1 rounded text-sm;
+}
+
+.article-content pre code {
+  @apply bg-transparent text-foreground p-0;
 }
 
 .article-content .warning {
-  @apply bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded;
+  @apply bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 dark:border-yellow-500 p-4 rounded;
 }
 
 .article-content .warning ul {
@@ -303,36 +430,103 @@ input[type="date"]+.absolute{
 }
 
 .article-content .warning li {
-  @apply text-yellow-800;
+  @apply text-yellow-800 dark:text-yellow-200;
 }
 
 /* Summary section */
 .article-content .summary {
-  @apply bg-blue-50 border-l-4 border-blue-400 p-4 rounded mb-6;
+  @apply bg-primary/10 border-l-4 border-primary p-4 rounded mb-6;
 }
 
 .article-content .summary p {
-  @apply text-blue-800 font-medium;
+  @apply text-primary font-medium;
 }
 
 /* Code snippet section */
 .article-content .code-snippet {
-  @apply bg-gray-50 border border-gray-200 rounded-lg p-4;
+  @apply bg-muted border border-border rounded-lg p-4;
 }
 
 .article-content .code-snippet h2 {
-  @apply text-lg font-semibold text-gray-800 mb-3 mt-0;
+  @apply text-lg font-semibold text-foreground mb-3 mt-0;
 }
 
 .article-content .code-snippet pre {
-  @apply bg-gray-900 text-gray-100 p-4 rounded;
+  @apply bg-muted text-foreground p-4 rounded;
 }
 
 /* Disclaimer */
 .article-content .disclaimer {
-  @apply bg-gray-50 border border-gray-200 rounded-lg p-4 mt-8;
+  @apply bg-muted border border-border rounded-lg p-4 mt-8;
 }
 
 .article-content .disclaimer p {
-  @apply text-gray-600 text-sm;
+  @apply text-muted-foreground text-sm;
+}
+
+/* Prose styling for dark mode */
+.prose {
+  @apply text-foreground;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  @apply text-foreground;
+}
+
+.prose p {
+  @apply text-foreground;
+}
+
+.prose a {
+  @apply text-primary hover:text-primary/80;
+}
+
+.prose strong {
+  @apply text-foreground font-bold;
+}
+
+.prose em {
+  @apply text-foreground italic;
+}
+
+.prose ul,
+.prose ol {
+  @apply text-foreground;
+}
+
+.prose li {
+  @apply text-foreground;
+}
+
+.prose blockquote {
+  @apply text-muted-foreground border-l-4 border-primary;
+}
+
+.prose code {
+  @apply bg-muted text-foreground;
+}
+
+.prose pre {
+  @apply bg-muted text-foreground;
+}
+
+.prose pre code {
+  @apply bg-transparent text-foreground;
+}
+
+.prose table {
+  @apply text-foreground;
+}
+
+.prose th {
+  @apply text-foreground border-border;
+}
+
+.prose td {
+  @apply text-foreground border-border;
 }

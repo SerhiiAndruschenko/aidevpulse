@@ -24,7 +24,7 @@ export async function GET() {
       <link>${baseUrl}/articles/${article.slug}</link>
       <guid isPermaLink="true">${baseUrl}/articles/${article.slug}</guid>
       <pubDate>${article.published_at.toUTCString()}</pubDate>
-      <author>Aiden V. Pulse</author>
+      <author>Aiden Pulse</author>
       ${article.hero_url ? `<enclosure url="${article.hero_url}" type="image/jpeg" length="0"/>` : ''}
     </item>`).join('')}
   </channel>

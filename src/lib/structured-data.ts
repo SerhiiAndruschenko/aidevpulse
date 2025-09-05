@@ -48,7 +48,7 @@ export function generateArticleStructuredData(
     dateModified: article.published_at.toISOString(),
     author: {
       '@type': 'Person',
-      name: article.author_type === 'ai' ? 'Aiden V. Pulse' : 'Human Editor'
+      name: article.author_type === 'ai' ? 'Aiden Pulse' : 'Human Editor'
     },
     publisher: {
       '@type': 'Organization',
