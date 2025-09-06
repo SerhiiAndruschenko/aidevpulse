@@ -19,23 +19,28 @@ export interface RankingConfig {
 export class RankingService {
   private static readonly DEFAULT_CONFIG: RankingConfig = {
     relevantKeywords: [
-      // Frameworks
+      // Frameworks & Libraries
       'react', 'nextjs', 'vue', 'angular', 'svelte', 'nuxt', 'vite', 'bun', 'deno',
+      'express', 'fastify', 'nestjs', 'remix', 'gatsby', 'astro', 'solid',
       // Languages
-      'typescript', 'javascript', 'nodejs', 'python', 'rust', 'go',
-      // AI/ML
+      'typescript', 'javascript', 'nodejs', 'python', 'rust', 'go', 'java', 'c#', 'php',
+      // AI/ML/Data Science
       'ai', 'artificial intelligence', 'machine learning', 'ml', 'openai', 'gemini', 'claude',
+      'tensorflow', 'pytorch', 'pandas', 'numpy', 'scikit-learn', 'data science',
+      'llm', 'gpt', 'chatgpt', 'copilot', 'deep learning', 'neural network',
       // Cloud & Infrastructure
       'aws', 'azure', 'gcp', 'google cloud', 'vercel', 'netlify', 'docker', 'kubernetes',
+      'terraform', 'ansible', 'jenkins', 'github actions', 'ci/cd', 'devops',
       // Databases
-      'postgresql', 'mysql', 'redis', 'mongodb', 'elasticsearch',
+      'postgresql', 'mysql', 'redis', 'mongodb', 'elasticsearch', 'supabase', 'prisma',
       // Tools & Libraries
-      'webpack', 'rollup', 'esbuild', 'swc', 'tailwind', 'bootstrap',
+      'webpack', 'rollup', 'esbuild', 'swc', 'tailwind', 'bootstrap', 'sass', 'less',
+      'jest', 'cypress', 'playwright', 'testing', 'linting', 'prettier',
       // Release keywords
-      'release', 'update', 'version', 'changelog', 'breaking', 'migration'
+      'release', 'update', 'version', 'changelog', 'breaking', 'migration', 'deprecation'
     ],
     prioritySources: [], // Will be populated based on source importance
-    minScore: 0.3,
+    minScore: 0.4, // Increased to be more selective
     maxItems: 50
   };
 
@@ -43,6 +48,18 @@ export class RankingService {
     let score = 0;
     const reasons: string[] = [];
     const text = `${item.title || ''} ${JSON.stringify(item.payload || {})}`.toLowerCase();
+
+    // Exclude gaming content
+    const gamingKeywords = [
+      'game', 'gaming', 'gamer', 'playstation', 'xbox', 'nintendo', 'steam', 'epic games',
+      'silksong', 'hollow knight', 'zelda', 'mario', 'pokemon', 'fortnite', 'minecraft',
+      'esports', 'twitch', 'streaming games', 'game review', 'game trailer', 'gameplay'
+    ];
+    
+    const hasGamingContent = gamingKeywords.some(keyword => text.includes(keyword));
+    if (hasGamingContent) {
+      return 0; // Completely exclude gaming content
+    }
 
     // Check for relevant keywords
     const keywordMatches = config.relevantKeywords.filter(keyword => 

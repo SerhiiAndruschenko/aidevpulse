@@ -28,15 +28,17 @@ Cron job працював дуже довго (5+ хвилин) і отриму�
 - ⚡ Зменшено кількість елементів для аналізу: 200 → 100
 - ⚡ Timeout protection: 4 хвилини
 
-### 4. **Швидкі джерела (FastIngestService)**
-- The Verge
-- Ars Technica
-- Engadget
-- OpenAI Blog
-- React GitHub
-- Next.js GitHub
-- Vue GitHub
-- TypeScript GitHub
+### 4. **Швидкі DEV/AI джерела (FastIngestService)**
+- Ars Technica (tech focus)
+- OpenAI Blog (AI focus)
+- React GitHub (dev focus)
+- Next.js GitHub (dev focus)
+- Vue GitHub (dev focus)
+- TypeScript GitHub (dev focus)
+- Node.js GitHub (dev focus)
+- Vite GitHub (dev focus)
+
+**Виключено:** The Verge, Engadget (багато gaming контенту)
 
 ## 📊 Очікувані результати
 

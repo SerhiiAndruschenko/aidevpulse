@@ -4,16 +4,16 @@ import Parser from 'rss-parser';
 const parser = new Parser();
 
 export class FastIngestService {
-  // Curated list of fastest, most reliable sources
+  // Curated list of fastest, most reliable DEV/AI sources (no gaming)
   private static fastSources = [
-    'The Verge',
     'Ars Technica', 
-    'Engadget',
     'OpenAI Blog',
     'React GitHub',
     'Next.js GitHub',
     'Vue GitHub',
-    'TypeScript GitHub'
+    'TypeScript GitHub',
+    'Node.js GitHub',
+    'Vite GitHub'
   ];
 
   static async runFastIngest(): Promise<number> {
@@ -81,6 +81,18 @@ export class FastIngestService {
       // Process only first 10 items for speed
       for (const item of feed.items.slice(0, 10)) {
         if (!item.link || !item.title) continue;
+
+        // Filter out gaming content
+        const text = `${item.title} ${item.contentSnippet || ''}`.toLowerCase();
+        const gamingKeywords = [
+          'game', 'gaming', 'gamer', 'playstation', 'xbox', 'nintendo', 'steam', 'epic games',
+          'silksong', 'hollow knight', 'zelda', 'mario', 'pokemon', 'fortnite', 'minecraft',
+          'esports', 'twitch', 'streaming games', 'game review', 'game trailer', 'gameplay'
+        ];
+        
+        if (gamingKeywords.some(keyword => text.includes(keyword))) {
+          continue; // Skip gaming content
+        }
 
         const hash = this.generateHash(`${source.url}:${item.link}:${item.title}`);
         
