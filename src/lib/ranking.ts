@@ -196,9 +196,16 @@ export class RankingService {
     // Filter out items that are too similar to avoid duplicate content
     const selectedItems: RankedItem[] = [];
     const usedTopics = new Set<string>();
+    const usedTitles = new Set<string>();
 
     for (const item of rankedItems) {
       if (selectedItems.length >= count) break;
+
+      // Check for exact title duplicates
+      const normalizedTitle = item.title?.toLowerCase().trim();
+      if (normalizedTitle && usedTitles.has(normalizedTitle)) {
+        continue; // Skip duplicate titles
+      }
 
       // Extract topic keywords from title and payload
       const topicKeywords = this.extractTopicKeywords(item);
@@ -211,6 +218,9 @@ export class RankingService {
       if (!isSimilar) {
         selectedItems.push(item);
         topicKeywords.forEach(keyword => usedTopics.add(keyword.toLowerCase()));
+        if (normalizedTitle) {
+          usedTitles.add(normalizedTitle);
+        }
       }
     }
 
@@ -218,8 +228,18 @@ export class RankingService {
     if (selectedItems.length < count) {
       for (const item of rankedItems) {
         if (selectedItems.length >= count) break;
+        
+        // Check for title duplicates even in fallback
+        const normalizedTitle = item.title?.toLowerCase().trim();
+        if (normalizedTitle && usedTitles.has(normalizedTitle)) {
+          continue;
+        }
+        
         if (!selectedItems.includes(item)) {
           selectedItems.push(item);
+          if (normalizedTitle) {
+            usedTitles.add(normalizedTitle);
+          }
         }
       }
     }

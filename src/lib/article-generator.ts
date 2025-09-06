@@ -19,13 +19,17 @@ export interface GeneratedArticle {
 
 export class ArticleGenerator {
   static generateSlug(title: string): string {
-    return title
+    const baseSlug = title
       .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .trim()
       .substring(0, 100);
+    
+    // Add timestamp to ensure uniqueness
+    const timestamp = Date.now().toString(36);
+    return `${baseSlug}-${timestamp}`;
   }
 
   static convertToHTML(articleContent: any): string {
