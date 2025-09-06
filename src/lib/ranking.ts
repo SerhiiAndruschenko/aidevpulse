@@ -190,6 +190,70 @@ export class RankingService {
     return rankedItems[0];
   }
 
+  static selectTopCandidates(rankedItems: RankedItem[], count: number = 3): RankedItem[] {
+    if (rankedItems.length === 0) return [];
+
+    // Filter out items that are too similar to avoid duplicate content
+    const selectedItems: RankedItem[] = [];
+    const usedTopics = new Set<string>();
+
+    for (const item of rankedItems) {
+      if (selectedItems.length >= count) break;
+
+      // Extract topic keywords from title and payload
+      const topicKeywords = this.extractTopicKeywords(item);
+      
+      // Check if this topic is too similar to already selected ones
+      const isSimilar = topicKeywords.some(keyword => 
+        usedTopics.has(keyword.toLowerCase())
+      );
+
+      if (!isSimilar) {
+        selectedItems.push(item);
+        topicKeywords.forEach(keyword => usedTopics.add(keyword.toLowerCase()));
+      }
+    }
+
+    // If we don't have enough diverse items, fill with remaining top items
+    if (selectedItems.length < count) {
+      for (const item of rankedItems) {
+        if (selectedItems.length >= count) break;
+        if (!selectedItems.includes(item)) {
+          selectedItems.push(item);
+        }
+      }
+    }
+
+    return selectedItems.slice(0, count);
+  }
+
+  private static extractTopicKeywords(item: RankedItem): string[] {
+    const keywords: string[] = [];
+    const text = `${item.title || ''} ${JSON.stringify(item.payload || {})}`.toLowerCase();
+
+    // Extract framework/library names
+    const frameworks = ['react', 'nextjs', 'vue', 'angular', 'svelte', 'nodejs', 'typescript', 'javascript', 'python', 'rust', 'go'];
+    frameworks.forEach(framework => {
+      if (text.includes(framework)) {
+        keywords.push(framework);
+      }
+    });
+
+    // Extract version numbers
+    const versionMatch = text.match(/v?(\d+\.\d+\.\d+)/);
+    if (versionMatch) {
+      keywords.push(versionMatch[1]);
+    }
+
+    // Extract release type
+    if (text.includes('release')) keywords.push('release');
+    if (text.includes('update')) keywords.push('update');
+    if (text.includes('breaking')) keywords.push('breaking');
+    if (text.includes('security')) keywords.push('security');
+
+    return keywords;
+  }
+
   static buildFactsPack(item: RankedItem): any {
     const payload = item.payload || {};
     

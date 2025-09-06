@@ -184,6 +184,112 @@ export class ArticleGenerator {
     }
   }
 
+  static async generateMultipleArticles(count: number = 3): Promise<Article[]> {
+    try {
+      console.log(`Starting generation of ${count} articles...`);
+
+      // Step 1: Ingest new data
+      const ingestedCount = await IngestService.runDailyIngest();
+      console.log(`Ingested ${ingestedCount} new items`);
+
+      // Step 2: Get recent raw items and rank them
+      const recentItems = await Database.getRecentRawItems(200); // Get more items for better selection
+      const rankedItems = RankingService.rankItems(recentItems);
+      
+      if (rankedItems.length === 0) {
+        console.log('No suitable candidates found for article generation');
+        return [];
+      }
+
+      // Step 3: Select top candidates (diverse topics)
+      const selectedItems = RankingService.selectTopCandidates(rankedItems, count);
+      console.log(`Selected ${selectedItems.length} candidates for article generation`);
+
+      const generatedArticles: Article[] = [];
+
+      // Step 4: Generate articles for each candidate
+      for (let i = 0; i < selectedItems.length; i++) {
+        const selectedItem = selectedItems[i];
+        console.log(`\n📝 Generating article ${i + 1}/${selectedItems.length}: ${selectedItem.title} (score: ${selectedItem.score})`);
+
+        try {
+          // Build facts pack
+          const factsPack = RankingService.buildFactsPack(selectedItem);
+
+          // Generate article content with AI
+          const articleContent = await AIService.generateArticle(factsPack);
+
+          // Validate article
+          const validation = await AIService.validateArticle(articleContent, factsPack);
+          if (!validation.isValid) {
+            console.log(`⚠️ Article ${i + 1} validation failed:`, validation.issues);
+          }
+
+          // Generate image prompt and hero image
+          const imagePrompt = await AIService.generateImagePrompt(factsPack.topic);
+          const heroUrl = await AIService.generateHeroImage(imagePrompt);
+
+          // Convert to HTML and create article
+          const slug = this.generateSlug(articleContent.headline);
+          const bodyHtml = this.convertToHTML(articleContent);
+          const wordCount = this.countWords(bodyHtml);
+
+          const article: GeneratedArticle = {
+            slug,
+            title: articleContent.headline,
+            dek: articleContent.dek,
+            body_html: bodyHtml,
+            word_count: wordCount,
+            hero_url: heroUrl || undefined,
+            lang: 'en',
+            author_type: 'ai',
+            review_status: validation.isValid ? 'auto' : 'needs_review',
+            primary_source_url: selectedItem.url || undefined,
+            published_at: new Date()
+          };
+
+          // Save to database
+          const savedArticle = await Database.insertArticle(article);
+
+          // Save citations
+          if (articleContent.citations.length > 0) {
+            const citations = articleContent.citations.map(citation => ({
+              article_id: savedArticle.id,
+              url: citation.url,
+              title: citation.title
+            }));
+            await Database.insertCitations(citations);
+          }
+
+          // Attach tags
+          if (articleContent.tags.length > 0) {
+            await Database.attachTagsToArticle(savedArticle.id, articleContent.tags);
+          }
+
+          generatedArticles.push(savedArticle);
+          console.log(`✅ Successfully generated article ${i + 1}: ${savedArticle.slug}`);
+
+          // Add delay between articles to avoid rate limiting
+          if (i < selectedItems.length - 1) {
+            console.log('⏳ Waiting 2 seconds before next article...');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+
+        } catch (error) {
+          console.error(`❌ Failed to generate article ${i + 1}:`, error);
+          // Continue with next article instead of failing completely
+        }
+      }
+
+      console.log(`\n🎉 Successfully generated ${generatedArticles.length} articles out of ${count} requested`);
+      return generatedArticles;
+
+    } catch (error) {
+      console.error('Failed to generate multiple articles:', error);
+      return [];
+    }
+  }
+
   static async runQualityChecks(): Promise<void> {
     console.log('Running quality checks...');
 

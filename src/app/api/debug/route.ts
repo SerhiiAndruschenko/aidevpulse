@@ -108,28 +108,29 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  // Test manual article generation
+  // Test manual multiple article generation
   try {
-    console.log('Manual article generation test started...');
+    console.log('Manual multiple article generation test started...');
     
     const { ArticleGenerator } = await import('@/lib/article-generator');
-    const article = await ArticleGenerator.generateDailyArticle();
+    const articles = await ArticleGenerator.generateMultipleArticles(3);
     
-    if (article) {
+    if (articles.length > 0) {
       return NextResponse.json({
         success: true,
-        message: 'Article generated successfully',
-        article: {
+        message: `Generated ${articles.length} articles successfully`,
+        articles: articles.map(article => ({
           id: article.id,
           title: article.title,
           slug: article.slug,
-          published_at: article.published_at
-        }
+          published_at: article.published_at,
+          review_status: article.review_status
+        }))
       });
     } else {
       return NextResponse.json({
         success: false,
-        message: 'No article generated - check logs for details'
+        message: 'No articles generated - check logs for details'
       });
     }
   } catch (error) {

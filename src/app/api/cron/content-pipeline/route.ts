@@ -27,33 +27,36 @@ export async function POST(request: NextRequest) {
     const ingestedCount = await IngestService.runDailyIngest();
     console.log(`✅ Ingested ${ingestedCount} new items`);
     
-    // Step 2: Generate daily article
-    console.log('🤖 Step 2: Generating article...');
-    const article = await ArticleGenerator.generateDailyArticle();
+    // Step 2: Generate multiple articles (3 by default)
+    console.log('🤖 Step 2: Generating multiple articles...');
+    const articles = await ArticleGenerator.generateMultipleArticles(3);
     
-    if (article) {
-      console.log(`✅ Successfully generated article: ${article.slug}`);
+    if (articles.length > 0) {
+      console.log(`✅ Successfully generated ${articles.length} articles`);
       return NextResponse.json({
         success: true,
-        message: 'Content pipeline completed successfully',
+        message: `Content pipeline completed successfully - generated ${articles.length} articles`,
         results: {
           ingested_count: ingestedCount,
-          article: {
+          articles_generated: articles.length,
+          articles: articles.map(article => ({
             id: article.slug,
             title: article.title,
             slug: article.slug,
-            published_at: article.published_at
-          }
+            published_at: article.published_at,
+            review_status: article.review_status
+          }))
         }
       });
     } else {
-      console.log('⚠️ No article generated today - check logs above for details');
+      console.log('⚠️ No articles generated today - check logs above for details');
       return NextResponse.json({
         success: true,
-        message: 'Content pipeline completed - no article generated',
+        message: 'Content pipeline completed - no articles generated',
         results: {
           ingested_count: ingestedCount,
-          article: null
+          articles_generated: 0,
+          articles: []
         }
       });
     }
@@ -76,10 +79,17 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     message: 'Content pipeline cron endpoint',
-    usage: 'POST to trigger content pipeline (ingest + generate article)',
+    usage: 'POST to trigger content pipeline (ingest + generate multiple articles)',
     steps: [
       '1. Ingest new data from sources',
-      '2. Generate daily article from ingested data'
+      '2. Generate 3 diverse articles from ingested data',
+      '3. Each article covers different topics/frameworks'
+    ],
+    features: [
+      'Smart topic diversification',
+      'Rate limiting protection',
+      'Individual article validation',
+      'Comprehensive error handling'
     ]
   });
 }
