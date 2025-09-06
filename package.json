@@ -8,6 +8,7 @@
     "start": "next start",
     "db:migrate": "node scripts/migrate.js",
     "db:seed": "node scripts/seed.js",
+    "db:update-sources": "node scripts/update-working-sources.js",
     "test:system": "node scripts/test-system.js",
     "diagnose:cron": "node scripts/diagnose-cron.js",
     "test:cron": "node scripts/test-cron-endpoints.js"

@@ -21,7 +21,14 @@ export class IngestService {
 
   static async ingestRSS(source: Source): Promise<IngestedItem[]> {
     try {
+      // Add timeout for RSS parsing
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const feed = await parser.parseURL(source.url);
+      
+      clearTimeout(timeoutId);
+      
       const items: IngestedItem[] = [];
 
       for (const item of feed.items) {
@@ -52,7 +59,11 @@ export class IngestService {
 
       return items;
     } catch (error) {
-      console.error(`Failed to ingest RSS from ${source.url}:`, error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.error(`RSS timeout for ${source.url} - skipping`);
+      } else {
+        console.error(`Failed to ingest RSS from ${source.url}:`, error instanceof Error ? error.message : 'Unknown error');
+      }
       return [];
     }
   }
@@ -182,9 +193,10 @@ export class IngestService {
         console.log(`Ingested ${items.length} items from ${source.name}`);
         
         // Add delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 500)); // Reduced delay
       } catch (error) {
         console.error(`Failed to ingest source ${source.name}:`, error);
+        // Continue with next source instead of failing completely
       }
     }
 
