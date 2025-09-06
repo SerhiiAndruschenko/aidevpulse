@@ -9,22 +9,30 @@ export async function POST(request: NextRequest) {
     const cronSecret = process.env.CRON_SECRET;
     
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+      console.log('Unauthorized request - missing or invalid CRON_SECRET');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log('Starting cron job: content-pipeline');
+    console.log('🚀 Starting cron job: content-pipeline');
+    console.log('Environment:', process.env.NODE_ENV);
+    console.log('Vercel region:', process.env.VERCEL_REGION);
+    
+    // Check environment variables
+    console.log('Environment check:');
+    console.log('- DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
+    console.log('- GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? 'SET' : 'NOT SET');
     
     // Step 1: Run daily ingest
-    console.log('Step 1: Ingesting new data...');
+    console.log('📥 Step 1: Ingesting new data...');
     const ingestedCount = await IngestService.runDailyIngest();
-    console.log(`Ingested ${ingestedCount} new items`);
+    console.log(`✅ Ingested ${ingestedCount} new items`);
     
     // Step 2: Generate daily article
-    console.log('Step 2: Generating article...');
+    console.log('🤖 Step 2: Generating article...');
     const article = await ArticleGenerator.generateDailyArticle();
     
     if (article) {
-      console.log(`Successfully generated article: ${article.slug}`);
+      console.log(`✅ Successfully generated article: ${article.slug}`);
       return NextResponse.json({
         success: true,
         message: 'Content pipeline completed successfully',
@@ -39,7 +47,7 @@ export async function POST(request: NextRequest) {
         }
       });
     } else {
-      console.log('No article generated today');
+      console.log('⚠️ No article generated today - check logs above for details');
       return NextResponse.json({
         success: true,
         message: 'Content pipeline completed - no article generated',
@@ -51,9 +59,14 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Content pipeline cron job failed:', error);
+    console.error('❌ Content pipeline cron job failed:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        error: 'Internal server error', 
+        details: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
