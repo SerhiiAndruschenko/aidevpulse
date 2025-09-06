@@ -100,6 +100,19 @@ export class Database {
     return result.rows;
   }
 
+  static async clearOldRawItems(daysToKeep: number = 7): Promise<number> {
+    const result = await pool.query(
+      'DELETE FROM items_raw WHERE created_at < NOW() - INTERVAL \'$1 days\'',
+      [daysToKeep]
+    );
+    return result.rowCount || 0;
+  }
+
+  static async getRawItemsCount(): Promise<number> {
+    const result = await pool.query('SELECT COUNT(*) as count FROM items_raw');
+    return parseInt(result.rows[0].count);
+  }
+
   // Articles
   static async insertArticle(article: Omit<Article, 'id' | 'created_at'>): Promise<Article> {
     const result = await pool.query(

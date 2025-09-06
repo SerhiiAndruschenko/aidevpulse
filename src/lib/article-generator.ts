@@ -33,32 +33,41 @@ export class ArticleGenerator {
   }
 
   static convertToHTML(articleContent: any): string {
-    const sections = articleContent.body_sections;
+    const sections = articleContent.body_sections || {};
     
     let html = `
       <div class="article-content">
         <div class="summary">
-          <p>${sections.summary_150w}</p>
+          <p>${sections.summary_150w || 'Technical summary of the release'}</p>
         </div>
         
         <section class="what-changed">
           <h2>What Changed</h2>
           <ul>
-            ${sections.what_changed.map((item: string) => `<li>${item}</li>`).join('')}
+            ${sections.what_changed && sections.what_changed.length > 0 
+              ? sections.what_changed.map((item: string) => `<li>${item}</li>`).join('')
+              : '<li>New features and improvements</li>'
+            }
           </ul>
         </section>
         
         <section class="why-it-matters">
           <h2>Why It Matters</h2>
           <ul>
-            ${sections.why_it_matters.map((item: string) => `<li>${item}</li>`).join('')}
+            ${sections.why_it_matters && sections.why_it_matters.length > 0
+              ? sections.why_it_matters.map((item: string) => `<li>${item}</li>`).join('')
+              : '<li>Important for development workflow</li>'
+            }
           </ul>
         </section>
         
         <section class="actions">
           <h2>Action Items</h2>
           <ul>
-            ${sections.actions.map((item: string) => `<li>${item}</li>`).join('')}
+            ${sections.actions && sections.actions.length > 0
+              ? sections.actions.map((item: string) => `<li>${item}</li>`).join('')
+              : '<li>Review release notes and plan upgrade</li>'
+            }
           </ul>
         </section>
     `;
@@ -66,8 +75,9 @@ export class ArticleGenerator {
     if (sections.breaking_changes && sections.breaking_changes.length > 0) {
       html += `
         <section class="breaking-changes">
-          <h2>Breaking Changes</h2>
+          <h2>⚠️ Breaking Changes</h2>
           <div class="warning">
+            <p class="text-sm font-medium mb-3">These changes may require code modifications:</p>
             <ul>
               ${sections.breaking_changes.map((item: string) => `<li>${item}</li>`).join('')}
             </ul>
@@ -76,11 +86,13 @@ export class ArticleGenerator {
       `;
     }
 
-    if (articleContent.code_snippet) {
+    if (articleContent.code_snippet && articleContent.code_snippet.code) {
       html += `
         <section class="code-snippet">
-          <h2>${articleContent.code_snippet.title}</h2>
-          <pre><code class="language-${articleContent.code_snippet.lang}">${articleContent.code_snippet.code}</code></pre>
+          <h2>${articleContent.code_snippet.title || 'Code Example'}</h2>
+          <div class="code-block">
+            <pre><code class="language-${articleContent.code_snippet.lang || 'bash'}">${articleContent.code_snippet.code}</code></pre>
+          </div>
         </section>
       `;
     }

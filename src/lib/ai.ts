@@ -33,45 +33,99 @@ export class AIService {
   private static model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
   static async generateArticle(factsPack: any): Promise<ArticleContent> {
-    const systemPrompt = `You are a senior dev/AI editor. Write an ORIGINAL analytical article from official release notes. Do not paraphrase sentences; synthesize and add value.
+    const systemPrompt = `You are a senior software engineer and technical writer with 10+ years of experience. Write a comprehensive, expert-level analysis article that provides deep technical insights, not just surface-level information.
+
+CRITICAL REQUIREMENTS:
+- Write with authority and expertise - you're speaking to fellow senior developers
+- Provide specific technical details, not generic statements
+- Include concrete examples, code snippets, and actionable insights
+- Analyze the IMPACT and IMPLICATIONS, not just what changed
+- Add your expert opinion on what this means for the ecosystem
+- Use precise technical language and avoid fluff
 
 Return STRICT JSON in this exact format:
 {
-  "headline": "...",
-  "dek": "...",
+  "headline": "Compelling, specific headline that captures the technical significance",
+  "dek": "Detailed subtitle explaining the broader impact and context",
   "body_sections": {
-    "summary_150w": "...",
-    "what_changed": ["...","..."],
-    "why_it_matters": ["...","...","..."],
-    "actions": ["upgrade command ...","check migration ..."],
-    "breaking_changes": ["..."]
+    "summary_150w": "Comprehensive summary with specific technical details and implications",
+    "what_changed": [
+      "Specific technical change 1 with concrete details",
+      "Specific technical change 2 with version numbers/APIs",
+      "Specific technical change 3 with performance metrics if available"
+    ],
+    "why_it_matters": [
+      "Technical impact on development workflow with specific examples",
+      "Performance implications with concrete numbers if available", 
+      "Ecosystem implications and how it affects related tools",
+      "Long-term strategic implications for the technology"
+    ],
+    "actions": [
+      "Specific upgrade command with exact syntax",
+      "Migration steps with file names and code examples",
+      "Testing recommendations with specific tools/commands",
+      "Monitoring/validation steps post-upgrade"
+    ],
+    "breaking_changes": [
+      "Specific breaking change 1 with migration path",
+      "Specific breaking change 2 with code examples",
+      "Specific breaking change 3 with impact assessment"
+    ]
   },
-  "code_snippet": {"lang":"bash","title":"Upgrade","code":"npx @next/codemod ..."},
-  "citations": [{"url":"...","title":"..."},{"url":"..."}],
-  "tags": ["nextjs","release","react","web"]
+  "code_snippet": {
+    "lang": "javascript|bash|typescript|json",
+    "title": "Specific title describing the code example",
+    "code": "Actual working code example with comments"
+  },
+  "citations": [
+    {"url": "official source URL", "title": "Official documentation title"},
+    {"url": "release notes URL", "title": "Release notes title"}
+  ],
+  "tags": ["framework-name", "release", "breaking-changes", "performance", "migration"]
 }
 
-Rules:
-- Add concrete commands and file names when possible.
-- Cite ONLY official links. No invented claims.
-- If a fact is uncertain, omit it.
-- Write in ${factsPack.language || 'English'}.
-- Target audience: ${factsPack.audience || 'experienced web developers'}.`;
+EXPERT WRITING GUIDELINES:
+- Start with the technical significance, not generic statements
+- Use specific version numbers, API names, and technical terms
+- Provide concrete examples and code snippets
+- Explain the "why" behind changes, not just the "what"
+- Include performance metrics, benchmarks, or technical specifications when available
+- Address potential gotchas, edge cases, or migration challenges
+- Write in ${factsPack.language || 'English'} for ${factsPack.audience || 'senior developers and technical leads'}
 
-    const userInput = `Analyze this release and create an analytical article:
+AVOID:
+- Generic statements like "this is important" or "developers should know"
+- Vague descriptions without technical details
+- Marketing language or promotional tone
+- Empty bullet points or placeholder text
+- Null values or empty arrays - always provide meaningful content`;
 
+    const userInput = `Create an expert technical analysis article based on this release information:
+
+RELEASE DETAILS:
 Topic: ${factsPack.topic}
-Date: ${factsPack.key_facts.date}
-Version: ${factsPack.key_facts.version}
-Highlights: ${factsPack.key_facts.highlights.join(', ')}
-Risks: ${factsPack.key_facts.risk.join(', ')}
-Ecosystem: ${factsPack.key_facts.ecosystem.join(', ')}
+Release Date: ${factsPack.key_facts.date}
+Version: ${factsPack.key_facts.version || 'Latest'}
+Highlights: ${factsPack.key_facts.highlights.join(', ') || 'New features and improvements'}
+Breaking Changes: ${factsPack.key_facts.risk.join(', ') || 'None specified'}
+Ecosystem Impact: ${factsPack.key_facts.ecosystem.join(', ') || 'General web development'}
 
-Sources:
+OFFICIAL SOURCES:
 ${factsPack.sources.map((s: any) => `- ${s.title}: ${s.url}`).join('\n')}
 
-Key Facts:
-${JSON.stringify(factsPack.key_facts, null, 2)}`;
+DETAILED RELEASE DATA:
+${JSON.stringify(factsPack.key_facts, null, 2)}
+
+ANALYSIS REQUIREMENTS:
+1. Focus on technical implementation details and specific changes
+2. Provide concrete examples and code snippets where applicable
+3. Explain the practical impact on development workflows
+4. Include specific upgrade/migration instructions
+5. Address potential challenges or gotchas
+6. Provide expert insights on ecosystem implications
+7. Use precise technical language throughout
+
+Write as if you're briefing a team of senior developers who need to understand the technical significance and plan their upgrade strategy.`;
 
     try {
       const result = await this.model.generateContent([systemPrompt, userInput]);
@@ -86,16 +140,56 @@ ${JSON.stringify(factsPack.key_facts, null, 2)}`;
 
       const articleContent = JSON.parse(jsonMatch[0]);
       
+      // Clean up null values and ensure proper structure
+      const cleanedContent = this.cleanArticleContent(articleContent);
+      
       // Validate required fields
-      if (!articleContent.headline || !articleContent.body_sections) {
+      if (!cleanedContent.headline || !cleanedContent.body_sections) {
         throw new Error('Invalid article structure from AI');
       }
 
-      return articleContent;
+      return cleanedContent;
     } catch (error) {
       console.error('Failed to generate article:', error);
       throw error;
     }
+  }
+
+  private static cleanArticleContent(content: any): ArticleContent {
+    // Clean up null values and ensure proper structure
+    const cleaned = {
+      headline: content.headline || 'Technical Release Update',
+      dek: content.dek || 'Important updates and changes for developers',
+      body_sections: {
+        summary_150w: content.body_sections?.summary_150w || 'Technical summary of the release',
+        what_changed: this.cleanArray(content.body_sections?.what_changed) || ['New features and improvements'],
+        why_it_matters: this.cleanArray(content.body_sections?.why_it_matters) || ['Important for development workflow'],
+        actions: this.cleanArray(content.body_sections?.actions) || ['Review release notes and plan upgrade'],
+        breaking_changes: this.cleanArray(content.body_sections?.breaking_changes) || []
+      },
+      code_snippet: content.code_snippet || null,
+      citations: this.cleanCitations(content.citations) || [],
+      tags: this.cleanArray(content.tags) || ['release', 'update']
+    };
+
+    return cleaned;
+  }
+
+  private static cleanArray(arr: any[]): string[] {
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter(item => item !== null && item !== undefined && item !== 'null' && item.trim() !== '')
+      .map(item => String(item).trim());
+  }
+
+  private static cleanCitations(arr: any[]): Array<{url: string, title: string}> {
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter(item => item !== null && item !== undefined && item !== 'null')
+      .map(item => ({
+        url: item.url || item,
+        title: item.title || item.url || 'Source'
+      }));
   }
 
   static async generateImagePrompt(topic: string): Promise<ImagePrompt> {
@@ -129,25 +223,61 @@ No text in image. Return plain text.`;
   }> {
     const issues: string[] = [];
 
-    // Check required fields
-    if (!article.headline || article.headline.length < 10) {
-      issues.push('Headline too short or missing');
+    // Check for null values
+    if (article.headline === null || article.headline === undefined || article.headline === 'null') {
+      issues.push('Headline is null or undefined');
+    } else if (article.headline.length < 15) {
+      issues.push('Headline too short (minimum 15 characters)');
     }
 
-    if (!article.dek || article.dek.length < 20) {
-      issues.push('Dek (subtitle) too short or missing');
+    if (article.dek === null || article.dek === undefined || article.dek === 'null') {
+      issues.push('Dek (subtitle) is null or undefined');
+    } else if (article.dek.length < 30) {
+      issues.push('Dek too short (minimum 30 characters)');
     }
 
-    if (!article.body_sections.summary_150w || article.body_sections.summary_150w.length < 50) {
-      issues.push('Summary too short or missing');
-    }
+    if (!article.body_sections || article.body_sections === null) {
+      issues.push('Body sections is null or undefined');
+    } else {
+      if (article.body_sections.summary_150w === null || article.body_sections.summary_150w === 'null') {
+        issues.push('Summary is null or undefined');
+      } else if (article.body_sections.summary_150w.length < 100) {
+        issues.push('Summary too short (minimum 100 characters)');
+      }
 
-    if (article.body_sections.what_changed.length === 0) {
-      issues.push('No "what changed" items');
-    }
+      if (!article.body_sections.what_changed || article.body_sections.what_changed.length === 0) {
+        issues.push('No "what changed" items');
+      } else {
+        // Check for null items in arrays
+        const nullItems = article.body_sections.what_changed.filter(item => 
+          item === null || item === undefined || item === 'null' || item.trim() === ''
+        );
+        if (nullItems.length > 0) {
+          issues.push(`Found ${nullItems.length} null/empty items in "what_changed"`);
+        }
+      }
 
-    if (article.body_sections.why_it_matters.length === 0) {
-      issues.push('No "why it matters" items');
+      if (!article.body_sections.why_it_matters || article.body_sections.why_it_matters.length === 0) {
+        issues.push('No "why it matters" items');
+      } else {
+        const nullItems = article.body_sections.why_it_matters.filter(item => 
+          item === null || item === undefined || item === 'null' || item.trim() === ''
+        );
+        if (nullItems.length > 0) {
+          issues.push(`Found ${nullItems.length} null/empty items in "why_it_matters"`);
+        }
+      }
+
+      if (!article.body_sections.actions || article.body_sections.actions.length === 0) {
+        issues.push('No "actions" items');
+      } else {
+        const nullItems = article.body_sections.actions.filter(item => 
+          item === null || item === undefined || item === 'null' || item.trim() === ''
+        );
+        if (nullItems.length > 0) {
+          issues.push(`Found ${nullItems.length} null/empty items in "actions"`);
+        }
+      }
     }
 
     // Check citations

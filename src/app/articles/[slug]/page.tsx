@@ -158,7 +158,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               <article className="prose prose-lg max-w-none text-foreground">
                 <div
                   dangerouslySetInnerHTML={{ __html: article.body_html }}
-                  className="article-content"
+                  className="article-content [&_.summary]:text-lg [&_.summary]:text-muted-foreground [&_.summary]:mb-8 [&_section]:mb-8 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-foreground [&_h2]:mb-4 [&_ul]:space-y-2 [&_li]:text-foreground [&_.code-block]:bg-muted [&_.code-block]:p-4 [&_.code-block]:rounded-lg [&_.code-block]:overflow-x-auto [&_pre]:text-sm [&_code]:font-mono [&_.breaking-changes]:bg-red-50 [&_.breaking-changes]:dark:bg-red-950/20 [&_.breaking-changes]:border [&_.breaking-changes]:border-red-200 [&_.breaking-changes]:dark:border-red-800 [&_.breaking-changes]:rounded-lg [&_.breaking-changes]:p-4 [&_.warning]:bg-yellow-50 [&_.warning]:dark:bg-yellow-950/20 [&_.warning]:border [&_.warning]:border-yellow-200 [&_.warning]:dark:border-yellow-800 [&_.warning]:rounded-lg [&_.warning]:p-4 [&_.disclaimer]:text-sm [&_.disclaimer]:text-muted-foreground [&_.disclaimer]:italic [&_.disclaimer]:mt-8"
                 />
               </article>
 
