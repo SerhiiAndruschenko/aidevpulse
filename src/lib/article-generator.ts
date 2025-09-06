@@ -184,16 +184,20 @@ export class ArticleGenerator {
     }
   }
 
-  static async generateMultipleArticles(count: number = 3): Promise<Article[]> {
+  static async generateMultipleArticles(count: number = 3, skipIngest: boolean = false): Promise<Article[]> {
     try {
       console.log(`Starting generation of ${count} articles...`);
 
-      // Step 1: Ingest new data
-      const ingestedCount = await IngestService.runDailyIngest();
-      console.log(`Ingested ${ingestedCount} new items`);
+      // Step 1: Ingest new data (only if not skipped)
+      if (!skipIngest) {
+        const ingestedCount = await IngestService.runDailyIngest();
+        console.log(`Ingested ${ingestedCount} new items`);
+      } else {
+        console.log('Skipping ingest (already done)');
+      }
 
-      // Step 2: Get recent raw items and rank them
-      const recentItems = await Database.getRecentRawItems(200); // Get more items for better selection
+      // Step 2: Get recent raw items and rank them (reduced for speed)
+      const recentItems = await Database.getRecentRawItems(100); // Reduced for faster processing
       const rankedItems = RankingService.rankItems(recentItems);
       
       if (rankedItems.length === 0) {
@@ -269,11 +273,11 @@ export class ArticleGenerator {
           generatedArticles.push(savedArticle);
           console.log(`✅ Successfully generated article ${i + 1}: ${savedArticle.slug}`);
 
-          // Add delay between articles to avoid rate limiting
-          if (i < selectedItems.length - 1) {
-            console.log('⏳ Waiting 2 seconds before next article...');
-            await new Promise(resolve => setTimeout(resolve, 2000));
-          }
+              // Add delay between articles to avoid rate limiting (reduced for speed)
+              if (i < selectedItems.length - 1) {
+                console.log('⏳ Waiting 1 second before next article...');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
 
         } catch (error) {
           console.error(`❌ Failed to generate article ${i + 1}:`, error);

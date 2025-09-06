@@ -13,7 +13,6 @@ const workingSources = [
   { name: 'Wired', kind: 'rss', url: 'https://www.wired.com/feed/rss' },
   { name: 'Ars Technica', kind: 'rss', url: 'https://arstechnica.com/feed/' },
   { name: 'Gizmodo', kind: 'rss', url: 'https://gizmodo.com/rss' },
-  { name: 'Mashable', kind: 'rss', url: 'https://mashable.com/feeds/all.xml' },
   { name: 'Engadget', kind: 'rss', url: 'https://www.engadget.com/rss.xml' },
   { name: 'ZDNet', kind: 'rss', url: 'https://www.zdnet.com/news/rss.xml' },
   { name: 'Slashdot', kind: 'rss', url: 'https://slashdot.org/slashdot.rss' },

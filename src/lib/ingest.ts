@@ -192,8 +192,8 @@ export class IngestService {
         allItems.push(...items);
         console.log(`Ingested ${items.length} items from ${source.name}`);
         
-        // Add delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 500)); // Reduced delay
+        // Add delay to avoid rate limiting (further reduced for speed)
+        await new Promise(resolve => setTimeout(resolve, 300)); // Further reduced delay
       } catch (error) {
         console.error(`Failed to ingest source ${source.name}:`, error);
         // Continue with next source instead of failing completely
