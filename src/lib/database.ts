@@ -125,6 +125,60 @@ export class Database {
     return result.rowCount || 0;
   }
 
+  static async ensureSystemSettingsTable(): Promise<void> {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS system_settings (
+        key VARCHAR(255) PRIMARY KEY,
+        value INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+  }
+
+  static async getCleanupCounter(): Promise<number> {
+    await this.ensureSystemSettingsTable();
+    const result = await pool.query(
+      'SELECT value FROM system_settings WHERE key = $1',
+      ['cleanup_counter']
+    );
+    return result.rows[0]?.value || 0;
+  }
+
+  static async incrementCleanupCounter(): Promise<number> {
+    await this.ensureSystemSettingsTable();
+    const result = await pool.query(
+      `INSERT INTO system_settings (key, value) 
+       VALUES ('cleanup_counter', 1) 
+       ON CONFLICT (key) 
+       DO UPDATE SET value = system_settings.value + 1, updated_at = NOW()
+       RETURNING value`,
+      []
+    );
+    return result.rows[0].value;
+  }
+
+  static async resetCleanupCounter(): Promise<void> {
+    await this.ensureSystemSettingsTable();
+    await pool.query(
+      'UPDATE system_settings SET value = 0, updated_at = NOW() WHERE key = $1',
+      ['cleanup_counter']
+    );
+  }
+
+  static async clearRawItemsByDateRange(daysBack: number): Promise<number> {
+    if (daysBack < 1) {
+      throw new Error('daysBack must be at least 1');
+    }
+    
+    const result = await pool.query(
+      `DELETE FROM items_raw 
+       WHERE created_at >= NOW() - INTERVAL '${daysBack + 5} days' 
+       AND created_at < NOW() - INTERVAL '${daysBack} days'`
+    );
+    return result.rowCount || 0;
+  }
+
   static async getRawItemsCount(): Promise<number> {
     const result = await pool.query('SELECT COUNT(*) as count FROM items_raw');
     return parseInt(result.rows[0].count);

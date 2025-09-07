@@ -32,6 +32,39 @@ export class ArticleGenerator {
     return `${baseSlug}-${timestamp}`;
   }
 
+  private static async performSmartCleanup(): Promise<void> {
+    try {
+      // Get current cleanup counter
+      const currentCounter = await Database.getCleanupCounter();
+      console.log(`📊 Current cleanup counter: ${currentCounter}`);
+      
+      // Increment counter
+      const newCounter = await Database.incrementCleanupCounter();
+      console.log(`📊 New cleanup counter: ${newCounter}`);
+      
+      // If counter reaches 5, perform cleanup and reset
+      if (newCounter >= 5) {
+        console.log('🧹 Performing 5-day cleanup cycle...');
+        
+        // Clean up items from 5 days ago (5-day range)
+        const deletedCount = await Database.clearRawItemsByDateRange(5);
+        console.log(`✅ Deleted ${deletedCount} items from 5 days ago`);
+        
+        // Reset counter
+        await Database.resetCleanupCounter();
+        console.log('🔄 Cleanup counter reset to 0');
+        
+        // Log current items count
+        const remainingCount = await Database.getRawItemsCount();
+        console.log(`📊 Remaining items in database: ${remainingCount}`);
+      } else {
+        console.log(`⏳ Cleanup in ${5 - newCounter} days`);
+      }
+    } catch (error) {
+      console.error('❌ Smart cleanup failed:', error);
+    }
+  }
+
   static convertToHTML(articleContent: any): string {
     const sections = articleContent.body_sections || {};
     
@@ -417,10 +450,8 @@ export class ArticleGenerator {
 
       console.log(`\n🎉 Successfully generated ${generatedArticles.length} articles out of ${count} requested`);
       
-      // Clean up old raw items after generation (keep only yesterday's items)
-      console.log('🧹 Cleaning old raw items (keeping only yesterday\'s items)...');
-      const deletedCount = await Database.clearOldRawItems(1); // Keep only last 1 day
-      console.log(`✅ Deleted ${deletedCount} old raw items`);
+      // Smart cleanup: every 5 days, clean up 5-day old data
+      await this.performSmartCleanup();
       
       return generatedArticles;
 
