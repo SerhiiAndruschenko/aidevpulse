@@ -230,6 +230,7 @@ export class ArticleGenerator {
       let generatedCount = 0;
       let currentIndex = 0;
       const usedTopics = new Set<string>(); // Track topics used in this generation session
+      const usedTitles = new Set<string>(); // Track titles used in this generation session
       
       while (generatedCount < count && currentIndex < rankedItems.length) {
         const selectedItem = rankedItems[currentIndex];
@@ -241,6 +242,25 @@ export class ArticleGenerator {
             const similarArticles = await Database.getSimilarArticles(selectedItem.title, 7); // Last 7 days
             if (similarArticles.length > 0) {
               console.log(`⚠️ Skipping similar article: ${selectedItem.title} (found similar: ${similarArticles[0].title})`);
+              currentIndex++;
+              continue;
+            }
+          }
+
+          // Check for similar titles within this generation session
+          if (selectedItem.title) {
+            const normalizedTitle = selectedItem.title.toLowerCase().trim();
+            const titleWords = normalizedTitle.split(/\s+/).filter(word => word.length > 2);
+            
+            // Check if any significant words from this title are already used
+            const hasTitleOverlap = titleWords.some(word => 
+              Array.from(usedTitles).some(usedTitle => 
+                usedTitle.includes(word) || word.includes(usedTitle.split(/\s+/).find(w => w.length > 2) || '')
+              )
+            );
+            
+            if (hasTitleOverlap) {
+              console.log(`⚠️ Skipping title overlap: ${selectedItem.title} (overlaps with used titles)`);
               currentIndex++;
               continue;
             }
@@ -317,8 +337,11 @@ export class ArticleGenerator {
           generatedArticles.push(savedArticle);
           generatedCount++;
           
-          // Mark topics as used to avoid duplicates in this session
+          // Mark topics and titles as used to avoid duplicates in this session
           allKeywords.forEach(keyword => usedTopics.add(keyword.toLowerCase()));
+          if (selectedItem.title) {
+            usedTitles.add(selectedItem.title.toLowerCase().trim());
+          }
           
           console.log(`✅ Successfully generated article ${generatedCount}: ${savedArticle.slug}`);
 

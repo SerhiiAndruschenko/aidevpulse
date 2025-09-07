@@ -127,30 +127,71 @@ export class Database {
     const titleWords = title.toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')
       .split(/\s+/)
-      .filter(word => word.length > 3) // Only words longer than 3 characters
-      .slice(0, 5); // Take first 5 meaningful words
+      .filter(word => word.length > 2) // Reduced to 2 characters for more sensitivity
+      .slice(0, 8); // Take more words for better matching
     
     if (titleWords.length === 0) return [];
     
-    // Create a pattern to match similar titles
-    const pattern = titleWords.join('|');
+    // Create multiple patterns for better matching
+    const patterns: string[] = [];
+    const likePatterns: string[] = [];
+    
+    // Add full pattern
+    patterns.push(`(${titleWords.join('|')})`);
+    
+    // Add individual word patterns
+    titleWords.forEach(word => {
+      likePatterns.push(`%${word}%`);
+    });
+    
+    // Add partial patterns (first 3 words, first 4 words, etc.)
+    for (let i = 3; i <= Math.min(titleWords.length, 6); i++) {
+      const partialWords = titleWords.slice(0, i);
+      patterns.push(`(${partialWords.join('|')})`);
+    }
+    
+    // Build the query with multiple conditions
+    const regexConditions = patterns.map((_, index) => `LOWER(title) ~ $${index + 1}`).join(' OR ');
+    const likeConditions = likePatterns.map((_, index) => `LOWER(title) LIKE $${patterns.length + index + 1}`).join(' OR ');
+    
+    const allParams = [...patterns, ...likePatterns];
     
     const result = await pool.query(
       `SELECT * FROM articles 
        WHERE published_at >= NOW() - INTERVAL '${daysBack} days'
-       AND (
-         LOWER(title) ~ $1 
-         OR LOWER(title) LIKE $2
-         OR LOWER(title) LIKE $3
-       )
+       AND (${regexConditions} OR ${likeConditions})
        ORDER BY published_at DESC
-       LIMIT 5`,
-      [
-        `(${pattern})`, // Regex pattern
-        `%${titleWords[0]}%`, // First word
-        `%${titleWords[1] || titleWords[0]}%` // Second word or first word again
-      ]
+       LIMIT 10`,
+      allParams
     );
+    
+    // Additional check: also check for similar slugs
+    const slugWords = title.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .split('-')
+      .filter(word => word.length > 2)
+      .slice(0, 5);
+    
+    if (slugWords.length > 0) {
+      const slugPattern = slugWords.join('|');
+      const slugResult = await pool.query(
+        `SELECT * FROM articles 
+         WHERE published_at >= NOW() - INTERVAL '${daysBack} days'
+         AND LOWER(slug) ~ $1
+         ORDER BY published_at DESC
+         LIMIT 5`,
+        [`(${slugPattern})`]
+      );
+      
+      // Merge results and remove duplicates
+      const allResults = [...result.rows, ...slugResult.rows];
+      const uniqueResults = allResults.filter((article, index, self) => 
+        index === self.findIndex(a => a.id === article.id)
+      );
+      
+      return uniqueResults;
+    }
     
     return result.rows;
   }
