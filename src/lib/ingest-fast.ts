@@ -20,11 +20,6 @@ export class FastIngestService {
     try {
       console.log('🚀 Starting fast ingest (top sources only)...');
       
-      // Always clear ALL old raw items before new ingest to prevent duplicate topics
-      console.log('🧹 Clearing ALL old raw items before new ingest...');
-      const deletedCount = await Database.clearAllRawItems();
-      console.log(`✅ Deleted ${deletedCount} old raw items`);
-      
       // Check current raw items count
       const currentCount = await Database.getRawItemsCount();
       console.log(`Current raw items in database: ${currentCount}`);
@@ -123,6 +118,10 @@ export class FastIngestService {
         // Check if we already have this item
         const existing = await Database.getRawItemByHash(hash);
         if (existing) continue;
+
+        // Check if we already have this item by title and URL (additional check)
+        const existingByTitle = await Database.getRawItemByTitleAndUrl(item.title, item.link);
+        if (existingByTitle) continue;
 
         items.push({
           source_id: source.id,

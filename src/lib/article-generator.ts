@@ -416,6 +416,12 @@ export class ArticleGenerator {
       }
 
       console.log(`\n🎉 Successfully generated ${generatedArticles.length} articles out of ${count} requested`);
+      
+      // Clean up old raw items after generation (keep only yesterday's items)
+      console.log('🧹 Cleaning old raw items (keeping only yesterday\'s items)...');
+      const deletedCount = await Database.clearOldRawItems(1); // Keep only last 1 day
+      console.log(`✅ Deleted ${deletedCount} old raw items`);
+      
       return generatedArticles;
 
     } catch (error) {

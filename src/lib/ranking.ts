@@ -205,8 +205,17 @@ export class RankingService {
       };
     });
 
-    // Sort by score descending
-    rankedItems.sort((a, b) => b.score - a.score);
+    // Sort by score descending, then by published date descending
+    rankedItems.sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+      // If scores are equal, prefer newer items
+      if (a.published_at && b.published_at) {
+        return b.published_at.getTime() - a.published_at.getTime();
+      }
+      return 0;
+    });
 
     // Filter by minimum score and limit
     return rankedItems
@@ -232,6 +241,7 @@ export class RankingService {
     const usedTitles = new Set<string>();
     const usedFrameworks = new Set<string>(); // Track frameworks to avoid same framework multiple times
     const usedKeywords = new Set<string>(); // Track all keywords to avoid similar content
+    const usedVersions = new Map<string, Date>(); // Track versions and their dates to avoid older versions
 
     for (const item of rankedItems) {
       if (selectedItems.length >= count) break;
@@ -262,14 +272,32 @@ export class RankingService {
         usedKeywords.has(keyword.toLowerCase())
       );
 
-      // Skip if same framework, similar topic, or keyword overlap
-      if (!hasUsedFramework && !isSimilar && !hasKeywordOverlap) {
+      // Check for older versions of the same framework
+      let isOlderVersion = false;
+      if (item.published_at && frameworkKeywords.length > 0) {
+        for (const framework of frameworkKeywords) {
+          const existingVersionDate = usedVersions.get(framework.toLowerCase());
+          if (existingVersionDate && item.published_at < existingVersionDate) {
+            isOlderVersion = true;
+            break;
+          }
+        }
+      }
+
+      // Skip if same framework, similar topic, keyword overlap, or older version
+      if (!hasUsedFramework && !isSimilar && !hasKeywordOverlap && !isOlderVersion) {
         selectedItems.push(item);
         topicKeywords.forEach(keyword => usedTopics.add(keyword.toLowerCase()));
         frameworkKeywords.forEach(framework => usedFrameworks.add(framework.toLowerCase()));
         allKeywords.forEach(keyword => usedKeywords.add(keyword.toLowerCase()));
         if (normalizedTitle) {
           usedTitles.add(normalizedTitle);
+        }
+        // Track version dates
+        if (item.published_at) {
+          frameworkKeywords.forEach(framework => {
+            usedVersions.set(framework.toLowerCase(), item.published_at!);
+          });
         }
       }
     }
@@ -297,13 +325,31 @@ export class RankingService {
         const hasKeywordOverlap = allKeywords.some(keyword => 
           usedKeywords.has(keyword.toLowerCase())
         );
+
+        // Check for older versions in fallback too
+        let isOlderVersion = false;
+        if (item.published_at && frameworkKeywords.length > 0) {
+          for (const framework of frameworkKeywords) {
+            const existingVersionDate = usedVersions.get(framework.toLowerCase());
+            if (existingVersionDate && item.published_at < existingVersionDate) {
+              isOlderVersion = true;
+              break;
+            }
+          }
+        }
         
-        if (!selectedItems.includes(item) && !hasUsedFramework && !hasKeywordOverlap) {
+        if (!selectedItems.includes(item) && !hasUsedFramework && !hasKeywordOverlap && !isOlderVersion) {
           selectedItems.push(item);
           frameworkKeywords.forEach(framework => usedFrameworks.add(framework.toLowerCase()));
           allKeywords.forEach(keyword => usedKeywords.add(keyword.toLowerCase()));
           if (normalizedTitle) {
             usedTitles.add(normalizedTitle);
+          }
+          // Track version dates in fallback too
+          if (item.published_at) {
+            frameworkKeywords.forEach(framework => {
+              usedVersions.set(framework.toLowerCase(), item.published_at!);
+            });
           }
         }
       }

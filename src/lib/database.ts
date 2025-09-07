@@ -92,6 +92,14 @@ export class Database {
     return result.rows[0] || null;
   }
 
+  static async getRawItemByTitleAndUrl(title: string, url: string): Promise<RawItem | null> {
+    const result = await pool.query(
+      'SELECT * FROM items_raw WHERE title = $1 AND url = $2',
+      [title, url]
+    );
+    return result.rows[0] || null;
+  }
+
   static async getRecentRawItems(limit: number = 100): Promise<RawItem[]> {
     const result = await pool.query(
       'SELECT * FROM items_raw ORDER BY published_at DESC NULLS LAST LIMIT $1',
