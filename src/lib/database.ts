@@ -175,6 +175,50 @@ export class Database {
       return overlapCount >= 2;
     });
     
+    // Additional check: also check for similar slugs
+    const slugWords = title.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .split('-')
+      .filter((word: string) => word.length > 3)
+      .filter((word: string) => !['the', 'and', 'for', 'with', 'from', 'this', 'that', 'are', 'was', 'were', 'have', 'has', 'had', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must', 'shall'].includes(word))
+      .slice(0, 3);
+    
+    if (slugWords.length >= 2) {
+      const slugPattern = slugWords.join('|');
+      const slugResult = await pool.query(
+        `SELECT * FROM articles 
+         WHERE published_at >= NOW() - INTERVAL '${daysBack} days'
+         AND LOWER(slug) ~ $1
+         ORDER BY published_at DESC
+         LIMIT 5`,
+        [`(${slugPattern})`]
+      );
+      
+      // Filter slug results for actual similarity
+      const filteredSlugResults = slugResult.rows.filter(article => {
+        const articleSlugWords = article.slug.toLowerCase()
+          .replace(/[^a-z0-9-]/g, '')
+          .split('-')
+          .filter((word: string) => word.length > 3)
+          .filter((word: string) => !['the', 'and', 'for', 'with', 'from', 'this', 'that', 'are', 'was', 'were', 'have', 'has', 'had', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must', 'shall'].includes(word));
+        
+        const slugOverlapCount = slugWords.filter((word: string) => 
+          articleSlugWords.some((articleWord: string) => articleWord === word)
+        ).length;
+        
+        return slugOverlapCount >= 2;
+      });
+      
+      // Merge results and remove duplicates
+      const allResults = [...filteredResults, ...filteredSlugResults];
+      const uniqueResults = allResults.filter((article, index, self) => 
+        index === self.findIndex(a => a.id === article.id)
+      );
+      
+      return uniqueResults;
+    }
+    
     return filteredResults;
   }
 

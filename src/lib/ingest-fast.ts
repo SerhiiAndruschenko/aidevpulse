@@ -95,7 +95,7 @@ export class FastIngestService {
       for (const item of feed.items.slice(0, 10)) {
         if (!item.link || !item.title) continue;
 
-        // Filter out gaming content
+        // Filter out gaming and non-DEV/AI content
         const text = `${item.title} ${item.contentSnippet || ''}`.toLowerCase();
         const gamingKeywords = [
           'game', 'gaming', 'gamer', 'playstation', 'xbox', 'nintendo', 'steam', 'epic games',
@@ -103,8 +103,19 @@ export class FastIngestService {
           'esports', 'twitch', 'streaming games', 'game review', 'game trailer', 'gameplay'
         ];
         
-        if (gamingKeywords.some(keyword => text.includes(keyword))) {
-          continue; // Skip gaming content
+        const nonDevKeywords = [
+          'covid', 'coronavirus', 'pandemic', 'vaccine', 'vaccination', 'health', 'medical',
+          'politics', 'election', 'trump', 'biden', 'government', 'policy', 'law', 'legal',
+          'sports', 'football', 'basketball', 'soccer', 'tennis', 'olympics', 'championship',
+          'entertainment', 'movie', 'film', 'celebrity', 'music', 'concert', 'festival',
+          'travel', 'tourism', 'hotel', 'restaurant', 'food', 'cooking', 'recipe',
+          'fashion', 'clothing', 'shopping', 'retail', 'business', 'finance', 'stock',
+          'real estate', 'housing', 'property', 'investment', 'economy', 'market'
+        ];
+        
+        if (gamingKeywords.some(keyword => text.includes(keyword)) || 
+            nonDevKeywords.some(keyword => text.includes(keyword))) {
+          continue; // Skip gaming and non-DEV/AI content
         }
 
         const hash = this.generateHash(`${source.url}:${item.link}:${item.title}`);

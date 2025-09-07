@@ -61,6 +61,22 @@ export class RankingService {
       return 0; // Completely exclude gaming content
     }
 
+    // Exclude non-DEV/AI content
+    const nonDevKeywords = [
+      'covid', 'coronavirus', 'pandemic', 'vaccine', 'vaccination', 'health', 'medical',
+      'politics', 'election', 'trump', 'biden', 'government', 'policy', 'law', 'legal',
+      'sports', 'football', 'basketball', 'soccer', 'tennis', 'olympics', 'championship',
+      'entertainment', 'movie', 'film', 'celebrity', 'music', 'concert', 'festival',
+      'travel', 'tourism', 'hotel', 'restaurant', 'food', 'cooking', 'recipe',
+      'fashion', 'clothing', 'shopping', 'retail', 'business', 'finance', 'stock',
+      'real estate', 'housing', 'property', 'investment', 'economy', 'market'
+    ];
+    
+    const hasNonDevContent = nonDevKeywords.some(keyword => text.includes(keyword));
+    if (hasNonDevContent) {
+      return 0; // Completely exclude non-DEV/AI content
+    }
+
     // Check for relevant keywords
     const keywordMatches = config.relevantKeywords.filter(keyword => 
       text.includes(keyword.toLowerCase())
