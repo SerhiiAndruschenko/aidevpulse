@@ -20,9 +20,9 @@ export class FastIngestService {
     try {
       console.log('🚀 Starting fast ingest (top sources only)...');
       
-      // Always clear old raw items before new ingest to prevent duplicate topics
-      console.log('🧹 Clearing old raw items before new ingest...');
-      const deletedCount = await Database.clearOldRawItems(1); // Keep only last 1 day
+      // Always clear ALL old raw items before new ingest to prevent duplicate topics
+      console.log('🧹 Clearing ALL old raw items before new ingest...');
+      const deletedCount = await Database.clearAllRawItems();
       console.log(`✅ Deleted ${deletedCount} old raw items`);
       
       // Check current raw items count

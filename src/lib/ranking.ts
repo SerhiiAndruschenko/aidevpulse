@@ -215,6 +215,7 @@ export class RankingService {
     const usedTopics = new Set<string>();
     const usedTitles = new Set<string>();
     const usedFrameworks = new Set<string>(); // Track frameworks to avoid same framework multiple times
+    const usedKeywords = new Set<string>(); // Track all keywords to avoid similar content
 
     for (const item of rankedItems) {
       if (selectedItems.length >= count) break;
@@ -228,6 +229,7 @@ export class RankingService {
       // Extract topic keywords from title and payload
       const topicKeywords = this.extractTopicKeywords(item);
       const frameworkKeywords = this.extractFrameworkKeywords(item);
+      const allKeywords = [...topicKeywords, ...frameworkKeywords];
       
       // Check if this framework is already used (avoid multiple articles about same framework)
       const hasUsedFramework = frameworkKeywords.some(framework => 
@@ -239,11 +241,17 @@ export class RankingService {
         usedTopics.has(keyword.toLowerCase())
       );
 
-      // Skip if same framework or too similar topic
-      if (!hasUsedFramework && !isSimilar) {
+      // Check for keyword overlap (more aggressive similarity check)
+      const hasKeywordOverlap = allKeywords.some(keyword => 
+        usedKeywords.has(keyword.toLowerCase())
+      );
+
+      // Skip if same framework, similar topic, or keyword overlap
+      if (!hasUsedFramework && !isSimilar && !hasKeywordOverlap) {
         selectedItems.push(item);
         topicKeywords.forEach(keyword => usedTopics.add(keyword.toLowerCase()));
         frameworkKeywords.forEach(framework => usedFrameworks.add(framework.toLowerCase()));
+        allKeywords.forEach(keyword => usedKeywords.add(keyword.toLowerCase()));
         if (normalizedTitle) {
           usedTitles.add(normalizedTitle);
         }
@@ -263,13 +271,21 @@ export class RankingService {
         
         // Check for framework duplicates in fallback too
         const frameworkKeywords = this.extractFrameworkKeywords(item);
+        const topicKeywords = this.extractTopicKeywords(item);
+        const allKeywords = [...topicKeywords, ...frameworkKeywords];
+        
         const hasUsedFramework = frameworkKeywords.some(framework => 
           usedFrameworks.has(framework.toLowerCase())
         );
         
-        if (!selectedItems.includes(item) && !hasUsedFramework) {
+        const hasKeywordOverlap = allKeywords.some(keyword => 
+          usedKeywords.has(keyword.toLowerCase())
+        );
+        
+        if (!selectedItems.includes(item) && !hasUsedFramework && !hasKeywordOverlap) {
           selectedItems.push(item);
           frameworkKeywords.forEach(framework => usedFrameworks.add(framework.toLowerCase()));
+          allKeywords.forEach(keyword => usedKeywords.add(keyword.toLowerCase()));
           if (normalizedTitle) {
             usedTitles.add(normalizedTitle);
           }

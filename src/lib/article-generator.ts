@@ -233,6 +233,15 @@ export class ArticleGenerator {
         console.log(`\n📝 Generating article ${i + 1}/${selectedItems.length}: ${selectedItem.title} (score: ${selectedItem.score})`);
 
         try {
+          // Check for similar recent articles to avoid duplicates
+          if (selectedItem.title) {
+            const similarArticles = await Database.getSimilarArticles(selectedItem.title, 7); // Last 7 days
+            if (similarArticles.length > 0) {
+              console.log(`⚠️ Skipping article ${i + 1}: Similar article found in last 7 days: ${similarArticles[0].title}`);
+              continue;
+            }
+          }
+
           // Build facts pack
           const factsPack = RankingService.buildFactsPack(selectedItem);
 

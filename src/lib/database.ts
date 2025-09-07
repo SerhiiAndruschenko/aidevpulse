@@ -112,9 +112,47 @@ export class Database {
     return result.rowCount || 0;
   }
 
+  static async clearAllRawItems(): Promise<number> {
+    const result = await pool.query('DELETE FROM items_raw');
+    return result.rowCount || 0;
+  }
+
   static async getRawItemsCount(): Promise<number> {
     const result = await pool.query('SELECT COUNT(*) as count FROM items_raw');
     return parseInt(result.rows[0].count);
+  }
+
+  static async getSimilarArticles(title: string, daysBack: number = 7): Promise<Article[]> {
+    // Extract key words from title for similarity check
+    const titleWords = title.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .split(/\s+/)
+      .filter(word => word.length > 3) // Only words longer than 3 characters
+      .slice(0, 5); // Take first 5 meaningful words
+    
+    if (titleWords.length === 0) return [];
+    
+    // Create a pattern to match similar titles
+    const pattern = titleWords.join('|');
+    
+    const result = await pool.query(
+      `SELECT * FROM articles 
+       WHERE published_at >= NOW() - INTERVAL '${daysBack} days'
+       AND (
+         LOWER(title) ~ $1 
+         OR LOWER(title) LIKE $2
+         OR LOWER(title) LIKE $3
+       )
+       ORDER BY published_at DESC
+       LIMIT 5`,
+      [
+        `(${pattern})`, // Regex pattern
+        `%${titleWords[0]}%`, // First word
+        `%${titleWords[1] || titleWords[0]}%` // Second word or first word again
+      ]
+    );
+    
+    return result.rows;
   }
 
   // Articles
