@@ -221,25 +221,44 @@ export class ArticleGenerator {
         return [];
       }
 
-      // Step 3: Select top candidates (diverse topics)
-      const selectedItems = RankingService.selectTopCandidates(rankedItems, count);
-      console.log(`Selected ${selectedItems.length} candidates for article generation`);
+      // Step 3: Use all ranked items for dynamic selection
+      console.log(`Using ${rankedItems.length} ranked items for dynamic article generation`);
 
       const generatedArticles: Article[] = [];
 
       // Step 4: Generate articles for each candidate
-      for (let i = 0; i < selectedItems.length; i++) {
-        const selectedItem = selectedItems[i];
-        console.log(`\n📝 Generating article ${i + 1}/${selectedItems.length}: ${selectedItem.title} (score: ${selectedItem.score})`);
+      let generatedCount = 0;
+      let currentIndex = 0;
+      const usedTopics = new Set<string>(); // Track topics used in this generation session
+      
+      while (generatedCount < count && currentIndex < rankedItems.length) {
+        const selectedItem = rankedItems[currentIndex];
+        console.log(`\n📝 Generating article ${generatedCount + 1}/${count}: ${selectedItem.title} (score: ${selectedItem.score})`);
 
         try {
           // Check for similar recent articles to avoid duplicates
           if (selectedItem.title) {
             const similarArticles = await Database.getSimilarArticles(selectedItem.title, 7); // Last 7 days
             if (similarArticles.length > 0) {
-              console.log(`⚠️ Skipping article ${i + 1}: Similar article found in last 7 days: ${similarArticles[0].title}`);
+              console.log(`⚠️ Skipping similar article: ${selectedItem.title} (found similar: ${similarArticles[0].title})`);
+              currentIndex++;
               continue;
             }
+          }
+
+          // Check for topic overlap within this generation session
+          const topicKeywords = RankingService.extractTopicKeywords(selectedItem);
+          const frameworkKeywords = RankingService.extractFrameworkKeywords(selectedItem);
+          const allKeywords = [...topicKeywords, ...frameworkKeywords];
+          
+          const hasTopicOverlap = allKeywords.some(keyword => 
+            usedTopics.has(keyword.toLowerCase())
+          );
+          
+          if (hasTopicOverlap) {
+            console.log(`⚠️ Skipping topic overlap: ${selectedItem.title} (keywords: ${allKeywords.join(', ')})`);
+            currentIndex++;
+            continue;
           }
 
           // Build facts pack
@@ -251,7 +270,7 @@ export class ArticleGenerator {
           // Validate article
           const validation = await AIService.validateArticle(articleContent, factsPack);
           if (!validation.isValid) {
-            console.log(`⚠️ Article ${i + 1} validation failed:`, validation.issues);
+            console.log(`⚠️ Article ${generatedCount + 1} validation failed:`, validation.issues);
           }
 
           // Generate image prompt and hero image
@@ -296,18 +315,25 @@ export class ArticleGenerator {
           }
 
           generatedArticles.push(savedArticle);
-          console.log(`✅ Successfully generated article ${i + 1}: ${savedArticle.slug}`);
+          generatedCount++;
+          
+          // Mark topics as used to avoid duplicates in this session
+          allKeywords.forEach(keyword => usedTopics.add(keyword.toLowerCase()));
+          
+          console.log(`✅ Successfully generated article ${generatedCount}: ${savedArticle.slug}`);
 
-              // Add delay between articles to avoid rate limiting (reduced for speed)
-              if (i < selectedItems.length - 1) {
-                console.log('⏳ Waiting 1 second before next article...');
-                await new Promise(resolve => setTimeout(resolve, 1000));
-              }
+          // Add delay between articles to avoid rate limiting (reduced for speed)
+          if (generatedCount < count) {
+            console.log('⏳ Waiting 1 second before next article...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
 
         } catch (error) {
-          console.error(`❌ Failed to generate article ${i + 1}:`, error);
+          console.error(`❌ Failed to generate article ${generatedCount + 1}:`, error);
           // Continue with next article instead of failing completely
         }
+        
+        currentIndex++;
       }
 
       console.log(`\n🎉 Successfully generated ${generatedArticles.length} articles out of ${count} requested`);

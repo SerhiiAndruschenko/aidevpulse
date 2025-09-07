@@ -296,7 +296,7 @@ export class RankingService {
     return selectedItems.slice(0, count);
   }
 
-  private static extractTopicKeywords(item: RankedItem): string[] {
+  static extractTopicKeywords(item: RankedItem): string[] {
     const keywords: string[] = [];
     const text = `${item.title || ''} ${JSON.stringify(item.payload || {})}`.toLowerCase();
 
@@ -315,7 +315,7 @@ export class RankingService {
     return keywords;
   }
 
-  private static extractFrameworkKeywords(item: RankedItem): string[] {
+  static extractFrameworkKeywords(item: RankedItem): string[] {
     const frameworks: string[] = [];
     const text = `${item.title || ''} ${JSON.stringify(item.payload || {})}`.toLowerCase();
 
