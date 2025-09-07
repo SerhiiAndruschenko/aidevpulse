@@ -214,6 +214,7 @@ export class RankingService {
     const selectedItems: RankedItem[] = [];
     const usedTopics = new Set<string>();
     const usedTitles = new Set<string>();
+    const usedFrameworks = new Set<string>(); // Track frameworks to avoid same framework multiple times
 
     for (const item of rankedItems) {
       if (selectedItems.length >= count) break;
@@ -226,15 +227,23 @@ export class RankingService {
 
       // Extract topic keywords from title and payload
       const topicKeywords = this.extractTopicKeywords(item);
+      const frameworkKeywords = this.extractFrameworkKeywords(item);
+      
+      // Check if this framework is already used (avoid multiple articles about same framework)
+      const hasUsedFramework = frameworkKeywords.some(framework => 
+        usedFrameworks.has(framework.toLowerCase())
+      );
       
       // Check if this topic is too similar to already selected ones
       const isSimilar = topicKeywords.some(keyword => 
         usedTopics.has(keyword.toLowerCase())
       );
 
-      if (!isSimilar) {
+      // Skip if same framework or too similar topic
+      if (!hasUsedFramework && !isSimilar) {
         selectedItems.push(item);
         topicKeywords.forEach(keyword => usedTopics.add(keyword.toLowerCase()));
+        frameworkKeywords.forEach(framework => usedFrameworks.add(framework.toLowerCase()));
         if (normalizedTitle) {
           usedTitles.add(normalizedTitle);
         }
@@ -252,8 +261,15 @@ export class RankingService {
           continue;
         }
         
-        if (!selectedItems.includes(item)) {
+        // Check for framework duplicates in fallback too
+        const frameworkKeywords = this.extractFrameworkKeywords(item);
+        const hasUsedFramework = frameworkKeywords.some(framework => 
+          usedFrameworks.has(framework.toLowerCase())
+        );
+        
+        if (!selectedItems.includes(item) && !hasUsedFramework) {
           selectedItems.push(item);
+          frameworkKeywords.forEach(framework => usedFrameworks.add(framework.toLowerCase()));
           if (normalizedTitle) {
             usedTitles.add(normalizedTitle);
           }
@@ -268,14 +284,6 @@ export class RankingService {
     const keywords: string[] = [];
     const text = `${item.title || ''} ${JSON.stringify(item.payload || {})}`.toLowerCase();
 
-    // Extract framework/library names
-    const frameworks = ['react', 'nextjs', 'vue', 'angular', 'svelte', 'nodejs', 'typescript', 'javascript', 'python', 'rust', 'go'];
-    frameworks.forEach(framework => {
-      if (text.includes(framework)) {
-        keywords.push(framework);
-      }
-    });
-
     // Extract version numbers
     const versionMatch = text.match(/v?(\d+\.\d+\.\d+)/);
     if (versionMatch) {
@@ -289,6 +297,21 @@ export class RankingService {
     if (text.includes('security')) keywords.push('security');
 
     return keywords;
+  }
+
+  private static extractFrameworkKeywords(item: RankedItem): string[] {
+    const frameworks: string[] = [];
+    const text = `${item.title || ''} ${JSON.stringify(item.payload || {})}`.toLowerCase();
+
+    // Extract framework/library names
+    const frameworkList = ['react', 'nextjs', 'vue', 'angular', 'svelte', 'nodejs', 'typescript', 'javascript', 'python', 'rust', 'go', 'openai', 'gemini', 'claude'];
+    frameworkList.forEach(framework => {
+      if (text.includes(framework)) {
+        frameworks.push(framework);
+      }
+    });
+
+    return frameworks;
   }
 
   static buildFactsPack(item: RankedItem): any {
