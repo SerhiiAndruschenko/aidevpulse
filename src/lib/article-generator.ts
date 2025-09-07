@@ -231,6 +231,7 @@ export class ArticleGenerator {
       let currentIndex = 0;
       const usedTopics = new Set<string>(); // Track topics used in this generation session
       const usedTitles = new Set<string>(); // Track titles used in this generation session
+      const usedSlugs = new Set<string>(); // Track slugs used in this generation session
       
       while (generatedCount < count && currentIndex < rankedItems.length) {
         const selectedItem = rankedItems[currentIndex];
@@ -242,6 +243,17 @@ export class ArticleGenerator {
             const similarArticles = await Database.getSimilarArticles(selectedItem.title, 7); // Last 7 days
             if (similarArticles.length > 0) {
               console.log(`⚠️ Skipping similar article: ${selectedItem.title} (found similar: ${similarArticles[0].title})`);
+              currentIndex++;
+              continue;
+            }
+          }
+
+          // Additional check: Check for similar slugs in recent articles
+          if (selectedItem.title) {
+            const potentialSlug = this.generateSlug(selectedItem.title);
+            const similarSlugs = await Database.getSimilarSlugs(potentialSlug, 7); // Last 7 days
+            if (similarSlugs.length > 0) {
+              console.log(`⚠️ Skipping similar slug: ${potentialSlug} (found similar: ${similarSlugs[0].slug})`);
               currentIndex++;
               continue;
             }

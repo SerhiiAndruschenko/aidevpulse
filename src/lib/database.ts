@@ -222,6 +222,54 @@ export class Database {
     return filteredResults;
   }
 
+  static async getSimilarSlugs(slug: string, daysBack: number = 7): Promise<Article[]> {
+    // Extract meaningful words from slug for similarity check
+    const slugWords = slug.toLowerCase()
+      .replace(/[^a-z0-9-]/g, '')
+      .split('-')
+      .filter((word: string) => word.length > 3)
+      .filter((word: string) => !['the', 'and', 'for', 'with', 'from', 'this', 'that', 'are', 'was', 'were', 'have', 'has', 'had', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must', 'shall'].includes(word))
+      .slice(0, 5); // Take first 5 meaningful words
+    
+    if (slugWords.length === 0) return [];
+    
+    // Only check for significant word overlap (at least 2 meaningful words)
+    const significantWords = slugWords.slice(0, 3); // Only first 3 most significant words
+    
+    if (significantWords.length < 2) return [];
+    
+    // Create pattern for slug matching
+    const pattern = `(${significantWords.join('|')})`;
+    
+    const result = await pool.query(
+      `SELECT * FROM articles 
+       WHERE published_at >= NOW() - INTERVAL '${daysBack} days'
+       AND LOWER(slug) ~ $1
+       ORDER BY published_at DESC
+       LIMIT 10`,
+      [pattern]
+    );
+    
+    // Filter results to ensure they actually have significant overlap
+    const filteredResults = result.rows.filter(article => {
+      const articleSlugWords = article.slug.toLowerCase()
+        .replace(/[^a-z0-9-]/g, '')
+        .split('-')
+        .filter((word: string) => word.length > 3)
+        .filter((word: string) => !['the', 'and', 'for', 'with', 'from', 'this', 'that', 'are', 'was', 'were', 'have', 'has', 'had', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must', 'shall'].includes(word));
+      
+      // Count overlapping words
+      const overlapCount = significantWords.filter((word: string) => 
+        articleSlugWords.some((articleWord: string) => articleWord === word)
+      ).length;
+      
+      // Only consider similar if at least 2 significant words overlap
+      return overlapCount >= 2;
+    });
+    
+    return filteredResults;
+  }
+
   // Articles
   static async insertArticle(article: Omit<Article, 'id' | 'created_at'>): Promise<Article> {
     const result = await pool.query(
