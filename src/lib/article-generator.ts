@@ -247,16 +247,25 @@ export class ArticleGenerator {
             }
           }
 
-          // Check for similar titles within this generation session
+          // Check for similar titles within this generation session (more precise)
           if (selectedItem.title) {
             const normalizedTitle = selectedItem.title.toLowerCase().trim();
-            const titleWords = normalizedTitle.split(/\s+/).filter(word => word.length > 2);
+            const titleWords = normalizedTitle.split(/\s+/)
+              .filter(word => word.length > 3)
+              .filter(word => !['the', 'and', 'for', 'with', 'from', 'this', 'that', 'are', 'was', 'were', 'have', 'has', 'had', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must', 'shall'].includes(word))
+              .slice(0, 3); // Only first 3 significant words
             
-            // Check if any significant words from this title are already used
+            // Check if significant words from this title are already used
             const hasTitleOverlap = titleWords.some(word => 
-              Array.from(usedTitles).some(usedTitle => 
-                usedTitle.includes(word) || word.includes(usedTitle.split(/\s+/).find(w => w.length > 2) || '')
-              )
+              Array.from(usedTitles).some(usedTitle => {
+                const usedWords = usedTitle.split(/\s+/)
+                  .filter(w => w.length > 3)
+                  .filter(w => !['the', 'and', 'for', 'with', 'from', 'this', 'that', 'are', 'was', 'were', 'have', 'has', 'had', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must', 'shall'].includes(w))
+                  .slice(0, 3);
+                
+                // Only consider overlap if exact word match (not partial)
+                return usedWords.includes(word);
+              })
             );
             
             if (hasTitleOverlap) {
@@ -266,17 +275,18 @@ export class ArticleGenerator {
             }
           }
 
-          // Check for topic overlap within this generation session
+          // Check for topic overlap within this generation session (more precise)
           const topicKeywords = RankingService.extractTopicKeywords(selectedItem);
           const frameworkKeywords = RankingService.extractFrameworkKeywords(selectedItem);
           const allKeywords = [...topicKeywords, ...frameworkKeywords];
           
-          const hasTopicOverlap = allKeywords.some(keyword => 
+          // Only check for framework overlap (not all keywords)
+          const hasFrameworkOverlap = frameworkKeywords.some(keyword => 
             usedTopics.has(keyword.toLowerCase())
           );
           
-          if (hasTopicOverlap) {
-            console.log(`⚠️ Skipping topic overlap: ${selectedItem.title} (keywords: ${allKeywords.join(', ')})`);
+          if (hasFrameworkOverlap) {
+            console.log(`⚠️ Skipping framework overlap: ${selectedItem.title} (frameworks: ${frameworkKeywords.join(', ')})`);
             currentIndex++;
             continue;
           }
@@ -337,8 +347,8 @@ export class ArticleGenerator {
           generatedArticles.push(savedArticle);
           generatedCount++;
           
-          // Mark topics and titles as used to avoid duplicates in this session
-          allKeywords.forEach(keyword => usedTopics.add(keyword.toLowerCase()));
+          // Mark frameworks and titles as used to avoid duplicates in this session
+          frameworkKeywords.forEach(keyword => usedTopics.add(keyword.toLowerCase()));
           if (selectedItem.title) {
             usedTitles.add(selectedItem.title.toLowerCase().trim());
           }

@@ -123,77 +123,59 @@ export class Database {
   }
 
   static async getSimilarArticles(title: string, daysBack: number = 7): Promise<Article[]> {
-    // Extract key words from title for similarity check
+    // Extract meaningful words from title for similarity check
     const titleWords = title.toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')
       .split(/\s+/)
-      .filter(word => word.length > 2) // Reduced to 2 characters for more sensitivity
-      .slice(0, 8); // Take more words for better matching
+      .filter(word => word.length > 3) // Increased back to 3 characters for better precision
+      .filter(word => !['the', 'and', 'for', 'with', 'from', 'this', 'that', 'are', 'was', 'were', 'have', 'has', 'had', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must', 'shall'].includes(word)) // Filter out common words
+      .slice(0, 5); // Take fewer words for more precise matching
     
     if (titleWords.length === 0) return [];
     
-    // Create multiple patterns for better matching
+    // Only check for significant word overlap (at least 2 meaningful words)
+    const significantWords = titleWords.slice(0, 3); // Only first 3 most significant words
+    
+    // Create patterns for exact word matching (not partial)
     const patterns: string[] = [];
-    const likePatterns: string[] = [];
     
-    // Add full pattern
-    patterns.push(`(${titleWords.join('|')})`);
-    
-    // Add individual word patterns
-    titleWords.forEach(word => {
-      likePatterns.push(`%${word}%`);
-    });
-    
-    // Add partial patterns (first 3 words, first 4 words, etc.)
-    for (let i = 3; i <= Math.min(titleWords.length, 6); i++) {
-      const partialWords = titleWords.slice(0, i);
-      patterns.push(`(${partialWords.join('|')})`);
+    // Add pattern for at least 2 significant words
+    if (significantWords.length >= 2) {
+      patterns.push(`(${significantWords.join('|')})`);
     }
     
-    // Build the query with multiple conditions
-    const regexConditions = patterns.map((_, index) => `LOWER(title) ~ $${index + 1}`).join(' OR ');
-    const likeConditions = likePatterns.map((_, index) => `LOWER(title) LIKE $${patterns.length + index + 1}`).join(' OR ');
+    if (patterns.length === 0) return [];
     
-    const allParams = [...patterns, ...likePatterns];
+    // Build the query with more precise conditions
+    const regexConditions = patterns.map((_, index) => `LOWER(title) ~ $${index + 1}`).join(' OR ');
     
     const result = await pool.query(
       `SELECT * FROM articles 
        WHERE published_at >= NOW() - INTERVAL '${daysBack} days'
-       AND (${regexConditions} OR ${likeConditions})
+       AND (${regexConditions})
        ORDER BY published_at DESC
-       LIMIT 10`,
-      allParams
+       LIMIT 5`,
+      patterns
     );
     
-    // Additional check: also check for similar slugs
-    const slugWords = title.toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .split('-')
-      .filter(word => word.length > 2)
-      .slice(0, 5);
-    
-    if (slugWords.length > 0) {
-      const slugPattern = slugWords.join('|');
-      const slugResult = await pool.query(
-        `SELECT * FROM articles 
-         WHERE published_at >= NOW() - INTERVAL '${daysBack} days'
-         AND LOWER(slug) ~ $1
-         ORDER BY published_at DESC
-         LIMIT 5`,
-        [`(${slugPattern})`]
-      );
+    // Filter results to ensure they actually have significant overlap
+    const filteredResults = result.rows.filter(article => {
+      const articleWords = article.title.toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .split(/\s+/)
+        .filter((word: string) => word.length > 3)
+        .filter((word: string) => !['the', 'and', 'for', 'with', 'from', 'this', 'that', 'are', 'was', 'were', 'have', 'has', 'had', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must', 'shall'].includes(word));
       
-      // Merge results and remove duplicates
-      const allResults = [...result.rows, ...slugResult.rows];
-      const uniqueResults = allResults.filter((article, index, self) => 
-        index === self.findIndex(a => a.id === article.id)
-      );
+      // Count overlapping words
+      const overlapCount = significantWords.filter((word: string) => 
+        articleWords.some((articleWord: string) => articleWord === word)
+      ).length;
       
-      return uniqueResults;
-    }
+      // Only consider similar if at least 2 significant words overlap
+      return overlapCount >= 2;
+    });
     
-    return result.rows;
+    return filteredResults;
   }
 
   // Articles
