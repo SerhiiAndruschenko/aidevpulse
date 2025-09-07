@@ -285,12 +285,23 @@ No text in image. Return plain text.`;
       issues.push('No citations provided');
     }
 
-    // Validate citations against facts pack
+    // Validate citations against facts pack and official domains
+    const officialDomains = [
+      'github.com', 'developer.apple.com', 'docs.microsoft.com', 'developers.google.com',
+      'reactjs.org', 'nextjs.org', 'vuejs.org', 'angular.io', 'nodejs.org', 'typescriptlang.org',
+      'openai.com', 'anthropic.com', 'huggingface.co', 'vercel.com', 'netlify.com'
+    ];
+    
     for (const citation of article.citations) {
       const isValidSource = factsPack.sources.some((s: any) => 
         s.url === citation.url || citation.url.includes(s.url)
       );
-      if (!isValidSource) {
+      
+      const isOfficialDomain = officialDomains.some(domain => 
+        citation.url.includes(domain)
+      );
+      
+      if (!isValidSource && !isOfficialDomain) {
         issues.push(`Citation not from official sources: ${citation.url}`);
       }
     }

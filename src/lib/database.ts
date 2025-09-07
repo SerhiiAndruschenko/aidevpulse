@@ -101,9 +101,13 @@ export class Database {
   }
 
   static async clearOldRawItems(daysToKeep: number = 7): Promise<number> {
+    // Validate input to prevent SQL injection
+    if (!Number.isInteger(daysToKeep) || daysToKeep < 0 || daysToKeep > 365) {
+      throw new Error('Invalid daysToKeep parameter');
+    }
+    
     const result = await pool.query(
-      'DELETE FROM items_raw WHERE created_at < NOW() - INTERVAL \'$1 days\'',
-      [daysToKeep]
+      `DELETE FROM items_raw WHERE created_at < NOW() - INTERVAL '${daysToKeep} days'`
     );
     return result.rowCount || 0;
   }
