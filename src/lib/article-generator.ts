@@ -259,6 +259,38 @@ export class ArticleGenerator {
             }
           }
 
+          // Check for similar slugs within this generation session
+          if (selectedItem.title) {
+            const potentialSlug = this.generateSlug(selectedItem.title);
+            const slugWords = potentialSlug.toLowerCase()
+              .replace(/[^a-z0-9-]/g, '')
+              .split('-')
+              .filter(word => word.length > 3)
+              .filter(word => !['the', 'and', 'for', 'with', 'from', 'this', 'that', 'are', 'was', 'were', 'have', 'has', 'had', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must', 'shall'].includes(word))
+              .slice(0, 3);
+            
+            // Check if significant words from this slug are already used
+            const hasSlugOverlap = slugWords.some(word => 
+              Array.from(usedSlugs).some(usedSlug => {
+                const usedSlugWords = usedSlug.toLowerCase()
+                  .replace(/[^a-z0-9-]/g, '')
+                  .split('-')
+                  .filter(w => w.length > 3)
+                  .filter(w => !['the', 'and', 'for', 'with', 'from', 'this', 'that', 'are', 'was', 'were', 'have', 'has', 'had', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must', 'shall'].includes(w))
+                  .slice(0, 3);
+                
+                // Only consider overlap if exact word match (not partial)
+                return usedSlugWords.includes(word);
+              })
+            );
+            
+            if (hasSlugOverlap) {
+              console.log(`⚠️ Skipping slug overlap: ${potentialSlug} (overlaps with used slugs)`);
+              currentIndex++;
+              continue;
+            }
+          }
+
           // Check for similar titles within this generation session (more precise)
           if (selectedItem.title) {
             const normalizedTitle = selectedItem.title.toLowerCase().trim();
@@ -359,10 +391,12 @@ export class ArticleGenerator {
           generatedArticles.push(savedArticle);
           generatedCount++;
           
-          // Mark frameworks and titles as used to avoid duplicates in this session
+          // Mark frameworks, titles, and slugs as used to avoid duplicates in this session
           frameworkKeywords.forEach(keyword => usedTopics.add(keyword.toLowerCase()));
           if (selectedItem.title) {
             usedTitles.add(selectedItem.title.toLowerCase().trim());
+            const generatedSlug = this.generateSlug(selectedItem.title);
+            usedSlugs.add(generatedSlug.toLowerCase());
           }
           
           console.log(`✅ Successfully generated article ${generatedCount}: ${savedArticle.slug}`);
