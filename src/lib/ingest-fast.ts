@@ -6,14 +6,39 @@ const parser = new Parser();
 export class FastIngestService {
   // Curated list of fastest, most reliable DEV/AI sources (no gaming)
   private static fastSources = [
-    'Ars Technica', 
+    // Top tech news sources
+    'The Verge',
+    'Wired', 
+    'Ars Technica',
+    'TechCrunch',
+    'Engadget',
+    'Gizmodo',
+    
+    // Top AI/ML sources
     'OpenAI Blog',
+    'Google AI Blog',
+    'Microsoft AI Blog',
+    'TensorFlow Blog',
+    'PyTorch Blog',
+    
+    // Top developer sources
+    'Dev.to',
+    'CSS-Tricks',
+    'Smashing Magazine',
+    'Stack Overflow Blog',
+    'GitHub Blog',
+    
+    // Top GitHub repos
     'React GitHub',
     'Next.js GitHub',
     'Vue GitHub',
+    'Angular GitHub',
     'TypeScript GitHub',
     'Node.js GitHub',
-    'Vite GitHub'
+    'Vite GitHub',
+    'Svelte GitHub',
+    'Astro GitHub',
+    'Remix GitHub'
   ];
 
   static async runFastIngest(): Promise<number> {

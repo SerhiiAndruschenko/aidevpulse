@@ -183,9 +183,9 @@ export class ArticleGenerator {
         // For now, we'll still proceed but mark as needs_review
       }
 
-      // Step 7: Generate image prompt and hero image
+      // Step 7: Skip image generation to reduce API calls
       const imagePrompt = await AIService.generateImagePrompt(factsPack.topic);
-      const heroUrl = await AIService.generateHeroImage(imagePrompt);
+      const heroUrl = null; // No hero image generated
 
       // Step 8: Convert to HTML and create article
       const slug = this.generateSlug(articleContent.headline);
@@ -380,9 +380,9 @@ export class ArticleGenerator {
             console.log(`⚠️ Article ${generatedCount + 1} validation failed:`, validation.issues);
           }
 
-          // Generate image prompt and hero image
+          // Skip image generation to reduce API calls
           const imagePrompt = await AIService.generateImagePrompt(factsPack.topic);
-          const heroUrl = await AIService.generateHeroImage(imagePrompt);
+          const heroUrl = null; // No hero image generated
 
           // Convert to HTML and create article
           const slug = this.generateSlug(articleContent.headline);

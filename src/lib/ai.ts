@@ -193,28 +193,12 @@ Write as if you're briefing a team of senior developers who need to understand t
   }
 
   static async generateImagePrompt(topic: string): Promise<ImagePrompt> {
-    const prompt = `Create a concise image prompt for a 1200x630 cover.
-Style: minimal, tech editorial, dark background, geometric shapes.
-Subject: "${topic}", include abstract elements (framework logo style but not trademarked logos).
-No text in image. Return plain text.`;
-
-    try {
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      const imagePrompt = response.text().trim();
-
-      return {
-        prompt: imagePrompt,
-        style: 'minimal, tech editorial, dark background, geometric shapes'
-      };
-    } catch (error) {
-      console.error('Failed to generate image prompt:', error);
-      // Fallback prompt
-      return {
-        prompt: `Minimal tech illustration with geometric shapes on dark background, representing ${topic}`,
-        style: 'minimal, tech editorial, dark background, geometric shapes'
-      };
-    }
+    // Skip image generation to reduce API calls
+    // Return a simple fallback prompt without making API call
+    return {
+      prompt: `Minimal tech illustration with geometric shapes on dark background, representing ${topic}`,
+      style: 'minimal, tech editorial, dark background, geometric shapes'
+    };
   }
 
   static async validateArticle(article: ArticleContent, factsPack: any): Promise<{
